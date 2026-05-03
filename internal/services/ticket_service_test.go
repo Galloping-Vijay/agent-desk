@@ -228,6 +228,42 @@ func TestTicketServiceAddProgressStoresContentAndAuthor(t *testing.T) {
 	}
 }
 
+func TestTicketServiceCreateTicketPreservesRichDescription(t *testing.T) {
+	setupTicketTestDB(t)
+	operator := createTestOperator(t, "rich-description-operator")
+
+	created, err := services.TicketService.CreateTicket(request.CreateTicketRequest{
+		Title:       "rich description ticket",
+		Description: "<p>客户反馈<strong>无法登录</strong></p><ul><li>验证码错误</li></ul>",
+	}, operator)
+	if err != nil {
+		t.Fatalf("CreateTicket() error = %v", err)
+	}
+	if created.Description != "<p>客户反馈<strong>无法登录</strong></p><ul><li>验证码错误</li></ul>" {
+		t.Fatalf("expected rich description to be preserved, got %q", created.Description)
+	}
+}
+
+func TestTicketServiceAddProgressPreservesRichContent(t *testing.T) {
+	setupTicketTestDB(t)
+	operator := createTestOperator(t, "rich-progress-operator")
+	ticket, err := services.TicketService.CreateTicket(createTestTicketRequest("rich-progress-ticket"), operator)
+	if err != nil {
+		t.Fatalf("CreateTicket() error = %v", err)
+	}
+
+	progress, err := services.TicketService.AddProgress(request.CreateTicketProgressRequest{
+		TicketID: ticket.ID,
+		Content:  "<p>已回访客户，结论：<strong>继续观察</strong></p>",
+	}, operator)
+	if err != nil {
+		t.Fatalf("AddProgress() error = %v", err)
+	}
+	if progress.Content != "<p>已回访客户，结论：<strong>继续观察</strong></p>" {
+		t.Fatalf("expected rich progress content to be preserved, got %q", progress.Content)
+	}
+}
+
 func TestTicketServiceAssignTicketRequiresTargetUser(t *testing.T) {
 	setupTicketTestDB(t)
 	operator := createTestOperator(t, "assign-operator")
