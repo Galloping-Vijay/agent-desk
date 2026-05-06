@@ -156,7 +156,7 @@ function ProjectDialog({
               bodyClassName,
             )}
           >
-            <div className="space-y-4 p-6">{children}</div>
+            <div className="space-y-4 p-6 w-full">{children}</div>
           </div>
         ) : (
           <div className={cn("min-h-0 flex-1", bodyClassName)}>{children}</div>

@@ -335,9 +335,9 @@ export function TicketDetailDialog({
           ) : undefined
         }
         size="xxl"
-        allowFullscreen
+        defaultFullscreen
         bodyScrollable={false}
-        bodyClassName="overflow-hidden"
+        bodyClassName="flex w-full"
       >
         {loading && !ticket ? (
           <div className="flex h-130 items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -345,7 +345,7 @@ export function TicketDetailDialog({
             加载中...
           </div>
         ) : ticket ? (
-          <div className="grid h-[min(72vh,680px)] min-h-0 grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_380px] border-t">
+          <div className="grid w-full h-full grid-cols-1 overflow-hidden lg:grid-cols-[minmax(0,1fr)_380px] border-t">
             <div className="min-h-0 space-y-5 overflow-y-auto border-b p-6 lg:border-r lg:border-b-0">
               <section className="space-y-2">
                 <div className="text-sm font-medium text-muted-foreground">描述</div>
