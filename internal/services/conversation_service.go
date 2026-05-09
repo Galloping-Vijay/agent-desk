@@ -153,7 +153,7 @@ func (s *conversationService) Create(externalUser openidentity.ExternalUser, cha
 		if err := ConversationEventLogService.CreateEvent(ctx, conversation.ID, enums.IMEventTypeCreate, enums.IMSenderTypeCustomer, 0, "用户创建会话", ""); err != nil {
 			return err
 		}
-		welcomeMessage, err = MessageService.CreateAIWelcomeMessageTx(ctx, conversation, aiAgent, now)
+		welcomeMessage, err = MessageService.createAIWelcomeMessage(ctx, conversation, aiAgent, now)
 		return err
 	}); err != nil {
 		return nil, err
@@ -517,7 +517,7 @@ func displayExternalName(ext *openidentity.ExternalUser) string {
 type conversationReadActor interface {
 	isAgentSide() bool
 	getReadState(conversationID int64) *models.ConversationReadState
-	markReadTx(ctx *sqls.TxContext, conversation *models.Conversation, targetMessage *models.Message, now time.Time) error
+	markRead(ctx *sqls.TxContext, conversation *models.Conversation, targetMessage *models.Message) error
 	conversationUpdateAudit() (userID int64, userName string)
 }
 
@@ -531,8 +531,8 @@ func (a agentConversationReadActor) getReadState(conversationID int64) *models.C
 	return ConversationReadStateService.GetByAgentReader(conversationID, a.operator)
 }
 
-func (a agentConversationReadActor) markReadTx(ctx *sqls.TxContext, conversation *models.Conversation, targetMessage *models.Message, now time.Time) error {
-	_, err := ConversationReadStateService.MarkAgentRead(ctx, conversation, a.operator, targetMessage, now)
+func (a agentConversationReadActor) markRead(ctx *sqls.TxContext, conversation *models.Conversation, targetMessage *models.Message) error {
+	_, err := ConversationReadStateService.MarkAgentRead(ctx, conversation, a.operator, targetMessage)
 	return err
 }
 
@@ -553,8 +553,8 @@ func (a customerConversationReadActor) getReadState(conversationID int64) *model
 	return ConversationReadStateService.GetByCustomerReader(conversationID, a.external)
 }
 
-func (a customerConversationReadActor) markReadTx(ctx *sqls.TxContext, conversation *models.Conversation, targetMessage *models.Message, now time.Time) error {
-	_, err := ConversationReadStateService.MarkCustomerRead(ctx, conversation, a.external, targetMessage, now)
+func (a customerConversationReadActor) markRead(ctx *sqls.TxContext, conversation *models.Conversation, targetMessage *models.Message) error {
+	_, err := ConversationReadStateService.MarkCustomerRead(ctx, conversation, a.external, targetMessage)
 	return err
 }
 
@@ -607,8 +607,7 @@ func (s *conversationService) markConversationReadWithActor(conversation *models
 		if currentConversation == nil {
 			return errorsx.InvalidParam("会话不存在")
 		}
-		now := time.Now()
-		if err := actor.markReadTx(ctx, currentConversation, targetMessage, now); err != nil {
+		if err := actor.markRead(ctx, currentConversation, targetMessage); err != nil {
 			return err
 		}
 		agentReadState, customerReadState := ConversationReadStateService.getConversationReadStates(ctx.Tx, currentConversation.ID)
@@ -632,7 +631,7 @@ func (s *conversationService) markConversationReadWithActor(conversation *models
 			"customer_unread_count": customerUnreadCount,
 			"update_user_id":        updateUserID,
 			"update_user_name":      updateUserName,
-			"updated_at":            now,
+			"updated_at":            time.Now(),
 		})
 	})
 	if err != nil {

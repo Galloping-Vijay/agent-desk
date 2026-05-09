@@ -426,6 +426,7 @@ func (s *wsService) PublishConversationChanged(conversation *models.Conversation
 			Status:                    conversation.Status,
 			ServiceMode:               conversation.ServiceMode,
 			CurrentAssigneeID:         conversation.CurrentAssigneeID,
+			CurrentTeamID:             conversation.CurrentTeamID,
 			LastMessageID:             conversation.LastMessageID,
 			LastMessageAt:             formatWsTime(&conversation.LastMessageAt),
 			LastActiveAt:              formatWsTime(&conversation.LastActiveAt),

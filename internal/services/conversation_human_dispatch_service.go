@@ -121,6 +121,7 @@ func (s *conversationHumanDispatchService) DispatchPendingConversation(conversat
 			return nil, err
 		}
 		if dispatched != nil {
+			WsService.PublishConversationChanged(dispatched, enums.IMRealtimeEventConversationAssigned)
 			return &HandoffDecisionResult{
 				Decision:   HandoffDecisionAssigned,
 				TeamID:     dispatched.CurrentTeamID,
@@ -129,8 +130,12 @@ func (s *conversationHumanDispatchService) DispatchPendingConversation(conversat
 		}
 	}
 	teamID := activeTeamIDs[0]
-	if err := s.moveToTeamPool(conversationID, teamID, "手动触发自动分配"); err != nil {
+	teamPoolConversation, err := s.moveToTeamPool(conversationID, teamID, "手动触发自动分配")
+	if err != nil {
 		return nil, err
+	}
+	if teamPoolConversation != nil {
+		WsService.PublishConversationChanged(teamPoolConversation, enums.IMRealtimeEventConversationUpdated)
 	}
 	return &HandoffDecisionResult{Decision: HandoffDecisionTeamPool, TeamID: teamID}, nil
 }
@@ -150,6 +155,7 @@ func (s *conversationHumanDispatchService) dispatchAfterHandoff(conversationID, 
 			return nil, err
 		}
 		if dispatched != nil {
+			WsService.PublishConversationChanged(dispatched, enums.IMRealtimeEventConversationAssigned)
 			if publishAssignEvent {
 				eventbus.PublishAsync(context.Background(), events.ConversationAssignedEvent{
 					ConversationID: dispatched.ID,
@@ -169,8 +175,12 @@ func (s *conversationHumanDispatchService) dispatchAfterHandoff(conversationID, 
 	}
 
 	teamID := activeTeamIDs[0]
-	if err := s.moveToTeamPool(conversationID, teamID, reason); err != nil {
+	teamPoolConversation, err := s.moveToTeamPool(conversationID, teamID, reason)
+	if err != nil {
 		return nil, err
+	}
+	if teamPoolConversation != nil {
+		WsService.PublishConversationChanged(teamPoolConversation, enums.IMRealtimeEventConversationUpdated)
 	}
 	return &HandoffDecisionResult{Decision: HandoffDecisionTeamPool, TeamID: teamID, Message: HandoffWaitingMessage}, nil
 }
@@ -195,11 +205,12 @@ func (s *conversationHumanDispatchService) markHandoff(conversationID int64, aiA
 	})
 }
 
-func (s *conversationHumanDispatchService) moveToTeamPool(conversationID, teamID int64, reason string) error {
+func (s *conversationHumanDispatchService) moveToTeamPool(conversationID, teamID int64, reason string) (*models.Conversation, error) {
 	now := time.Now()
-	return sqls.WithTransaction(func(ctx *sqls.TxContext) error {
-		conversation := repositories.ConversationRepository.Get(ctx.Tx, conversationID)
-		if conversation == nil {
+	var conversation *models.Conversation
+	err := sqls.WithTransaction(func(ctx *sqls.TxContext) error {
+		current := repositories.ConversationRepository.Get(ctx.Tx, conversationID)
+		if current == nil {
 			return errorsx.InvalidParam("会话不存在")
 		}
 		if err := ConversationAssignmentService.FinishActiveAssignments(ctx, conversationID, now); err != nil {
@@ -215,16 +226,30 @@ func (s *conversationHumanDispatchService) moveToTeamPool(conversationID, teamID
 		}); err != nil {
 			return err
 		}
-		return ConversationEventLogService.CreateEvent(ctx, conversationID, enums.IMEventTypeTransfer, enums.IMSenderTypeSystem, 0, "会话进入客服组待接入", ConversationService.buildEventPayload(map[string]any{
-			"fromStatus":     conversation.Status,
+		if err := ConversationEventLogService.CreateEvent(ctx, conversationID, enums.IMEventTypeTransfer, enums.IMSenderTypeSystem, 0, "会话进入客服组待接入", ConversationService.buildEventPayload(map[string]any{
+			"fromStatus":     current.Status,
 			"toStatus":       enums.IMConversationStatusPending,
-			"fromAssigneeId": conversation.CurrentAssigneeID,
+			"fromAssigneeId": current.CurrentAssigneeID,
 			"toAssigneeId":   int64(0),
 			"toTeamId":       teamID,
 			"reason":         strings.TrimSpace(reason),
 			"decision":       string(HandoffDecisionTeamPool),
-		}))
+		})); err != nil {
+			return err
+		}
+		current.Status = enums.IMConversationStatusPending
+		current.CurrentTeamID = teamID
+		current.CurrentAssigneeID = 0
+		current.UpdateUserID = 0
+		current.UpdateUserName = "system"
+		current.UpdatedAt = now
+		conversation = current
+		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return conversation, nil
 }
 
 func (s *conversationHumanDispatchService) moveToGlobalPool(conversationID int64, operatorName string) error {

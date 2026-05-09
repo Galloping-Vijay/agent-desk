@@ -258,7 +258,7 @@ func (s *messageService) SendAIServiceNotice(conversationID int64, aiAgentID int
 	}, nil)
 }
 
-func (s *messageService) CreateAIWelcomeMessageTx(ctx *sqls.TxContext, conversation *models.Conversation, aiAgent *models.AIAgent, now time.Time) (*models.Message, error) {
+func (s *messageService) createAIWelcomeMessage(ctx *sqls.TxContext, conversation *models.Conversation, aiAgent *models.AIAgent, now time.Time) (*models.Message, error) {
 	if ctx == nil || conversation == nil || aiAgent == nil || strings.TrimSpace(aiAgent.WelcomeMessage) == "" {
 		return nil, nil
 	}
@@ -300,7 +300,7 @@ func (s *messageService) CreateAIWelcomeMessageTx(ctx *sqls.TxContext, conversat
 		return nil, err
 	}
 
-	if _, err := ConversationReadStateService.MarkAgentRead(ctx, conversation, operator, message, now); err != nil {
+	if _, err := ConversationReadStateService.MarkAgentRead(ctx, conversation, operator, message); err != nil {
 		return nil, err
 	}
 	agentReadState, customerReadState := ConversationReadStateService.getConversationReadStates(ctx.Tx, conversation.ID)
@@ -450,56 +450,44 @@ func (s *messageService) sendValidatedMessage(conversation *models.Conversation,
 		}
 
 		// 处理已读、维度
-		readStateType := senderType
-		if senderType == enums.IMSenderTypeAI {
-			readStateType = enums.IMSenderTypeAgent
-		}
-		if readStateType == enums.IMSenderTypeAgent {
-			if _, err := ConversationReadStateService.MarkAgentRead(ctx, conversation, operator, message, now); err != nil {
-				return err
-			}
-		} else {
-			if _, err := ConversationReadStateService.MarkCustomerRead(ctx, conversation, external, message, now); err != nil {
-				return err
-			}
-		}
-		agentReadState, customerReadState := ConversationReadStateService.getConversationReadStates(ctx.Tx, conversation.ID)
-		agentUnreadCount, err := ConversationReadStateService.CountUnreadMessages(ctx, conversation.ID, s.readSeqNo(agentReadState), enums.IMSenderTypeCustomer)
-		if err != nil {
-			return err
-		}
-		customerUnreadCount, err := ConversationReadStateService.CountUnreadMessages(ctx, conversation.ID, s.readSeqNo(customerReadState), enums.IMSenderTypeAgent, enums.IMSenderTypeAI)
+		agentUnreadCount, customerUnreadCount, err := s.handleReadState(ctx, senderType, conversation, operator, message, external)
 		if err != nil {
 			return err
 		}
 
-		updateUserID := int64(0)
-		updateUserName := ""
+		conversation.LastMessageID = message.ID
+		conversation.LastMessageAt = now
+		conversation.LastActiveAt = now
+		conversation.LastMessageSummary = limitText(summary, 255)
+		conversation.UpdateUserID = int64(0)
+		conversation.UpdateUserName = ""
 		if operator != nil {
-			updateUserID = operator.UserID
-			updateUserName = operator.Username
+			conversation.UpdateUserID = operator.UserID
+			conversation.UpdateUserName = operator.Username
 		}
 		if senderType == enums.IMSenderTypeCustomer && external != nil {
-			updateUserID = 0
-			updateUserName = displayExternalName(external)
+			conversation.UpdateUserID = 0
+			conversation.UpdateUserName = displayExternalName(external)
 		}
+		conversation.UpdatedAt = now
+		conversation.AgentUnreadCount = int(agentUnreadCount)
+		conversation.CustomerUnreadCount = int(customerUnreadCount)
 		if err := repositories.ConversationRepository.Updates(ctx.Tx, conversation.ID, map[string]any{
-			"last_message_id":       message.ID,
-			"last_message_at":       now,
-			"last_active_at":        now,
-			"last_message_summary":  limitText(summary, 255),
-			"update_user_id":        updateUserID,
-			"update_user_name":      updateUserName,
-			"updated_at":            now,
-			"agent_unread_count":    agentUnreadCount,
-			"customer_unread_count": customerUnreadCount,
+			"last_message_id":       conversation.LastMessageID,
+			"last_message_at":       conversation.LastMessageAt,
+			"last_active_at":        conversation.LastActiveAt,
+			"last_message_summary":  conversation.LastMessageSummary,
+			"update_user_id":        conversation.UpdateUserID,
+			"update_user_name":      conversation.UpdateUserName,
+			"updated_at":            conversation.UpdatedAt,
+			"agent_unread_count":    conversation.AgentUnreadCount,
+			"customer_unread_count": conversation.CustomerUnreadCount,
 		}); err != nil {
 			return err
 		}
-		if err := ConversationEventLogService.CreateEvent(ctx,
-			conversation.ID,
-			enums.IMEventTypeMessageSend,
-			senderType,
+
+		// 记录事件日志
+		if err := ConversationEventLogService.CreateEvent(ctx, conversation.ID, enums.IMEventTypeMessageSend, senderType,
 			func() int64 {
 				if operator != nil {
 					return operator.UserID
@@ -511,14 +499,18 @@ func (s *messageService) sendValidatedMessage(conversation *models.Conversation,
 		); err != nil {
 			return err
 		}
+
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	// 处理websocket消息
 	WsService.PublishMessageCreated(conversation, message)
 	WsService.PublishConversationChanged(conversation, enums.IMRealtimeEventConversationUpdated)
+
+	// 企业微信客服消息入队，异步发送
 	if enqueueErr := ChannelMessageOutboxService.EnqueueWxWorkKFMessage(conversation, message); enqueueErr != nil {
 		slog.Error("enqueue wxwork kf outbox failed",
 			"conversation_id", conversation.ID,
@@ -526,12 +518,39 @@ func (s *messageService) sendValidatedMessage(conversation *models.Conversation,
 			"error", enqueueErr,
 		)
 	}
+
+	// 客户发送消息，触发AI回复
 	if senderType == enums.IMSenderTypeCustomer {
 		if TriggerAIReplyAsyncHook != nil {
 			TriggerAIReplyAsyncHook(*conversation, *message)
 		}
 	}
 	return message, err
+}
+
+// handleReadState 根据发送者类型更新会话已读状态，并返回更新后的客服和客户未读消息数。
+func (s *messageService) handleReadState(ctx *sqls.TxContext, senderType enums.IMSenderType, conversation *models.Conversation, operator *dto.AuthPrincipal, message *models.Message, external *openidentity.ExternalUser) (agentUnreadCount int64, customerUnreadCount int64, err error) {
+	readStateType := senderType
+	if senderType == enums.IMSenderTypeAI {
+		readStateType = enums.IMSenderTypeAgent
+	}
+	if readStateType == enums.IMSenderTypeAgent {
+		if _, err := ConversationReadStateService.MarkAgentRead(ctx, conversation, operator, message); err != nil {
+			return 0, 0, err
+		}
+	} else {
+		if _, err := ConversationReadStateService.MarkCustomerRead(ctx, conversation, external, message); err != nil {
+			return 0, 0, err
+		}
+	}
+	agentReadState, customerReadState := ConversationReadStateService.getConversationReadStates(ctx.Tx, conversation.ID)
+	if agentUnreadCount, err = ConversationReadStateService.CountUnreadMessages(ctx, conversation.ID, s.readSeqNo(agentReadState), enums.IMSenderTypeCustomer); err != nil {
+		return 0, 0, err
+	}
+	if customerUnreadCount, err = ConversationReadStateService.CountUnreadMessages(ctx, conversation.ID, s.readSeqNo(customerReadState), enums.IMSenderTypeAgent, enums.IMSenderTypeAI); err != nil {
+		return 0, 0, err
+	}
+	return agentUnreadCount, customerUnreadCount, nil
 }
 
 func limitText(value string, maxLen int) string {

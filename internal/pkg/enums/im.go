@@ -54,10 +54,10 @@ func GetIMConversationServiceModeLabel(mode IMConversationServiceMode) string {
 type IMSenderType string
 
 const (
-	IMSenderTypeAgent    IMSenderType = "agent"
-	IMSenderTypeCustomer IMSenderType = "customer"
-	IMSenderTypeAI       IMSenderType = "ai"
-	IMSenderTypeSystem   IMSenderType = "system"
+	IMSenderTypeAgent    IMSenderType = "agent"    // 客服
+	IMSenderTypeCustomer IMSenderType = "customer" // 客户
+	IMSenderTypeAI       IMSenderType = "ai"       // AI
+	IMSenderTypeSystem   IMSenderType = "system"   // 系统
 )
 
 var imSenderTypeLabelMap = map[IMSenderType]string{

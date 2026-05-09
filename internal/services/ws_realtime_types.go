@@ -192,6 +192,7 @@ type RealtimeConversationChangedPayload struct {
 	Status                    enums.IMConversationStatus      `json:"status,omitempty"`
 	ServiceMode               enums.IMConversationServiceMode `json:"serviceMode,omitempty"`
 	CurrentAssigneeID         int64                           `json:"currentAssigneeId,omitempty"`
+	CurrentTeamID             int64                           `json:"currentTeamId,omitempty"`
 	LastMessageID             int64                           `json:"lastMessageId,omitempty"`
 	LastMessageAt             string                          `json:"lastMessageAt,omitempty"`
 	LastActiveAt              string                          `json:"lastActiveAt,omitempty"`

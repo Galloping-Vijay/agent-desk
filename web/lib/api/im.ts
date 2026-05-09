@@ -40,6 +40,7 @@ export type ImConversation = {
   priority: number
   currentAssigneeId: number
   currentAssigneeName?: string
+  currentTeamId?: number
   lastMessageId: number
   lastMessageAt?: string
   lastActiveAt?: string

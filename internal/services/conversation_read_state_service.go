@@ -172,30 +172,32 @@ func (s *conversationReadStateService) pickConversationReadStates(list []models.
 }
 
 // MarkAgentRead 在事务内更新/创建客服已读游标。
-func (s *conversationReadStateService) MarkAgentRead(ctx *sqls.TxContext, conversation *models.Conversation, operator *dto.AuthPrincipal, message *models.Message, now time.Time) (*models.ConversationReadState, error) {
+func (s *conversationReadStateService) MarkAgentRead(ctx *sqls.TxContext, conversation *models.Conversation, operator *dto.AuthPrincipal, message *models.Message) (*models.ConversationReadState, error) {
 	c, err := agentReaderCursor(operator)
 	if err != nil {
 		return nil, err
 	}
-	return s.markReadTxWithCursor(ctx, conversation, c, message, now)
+	return s.markReadTxWithCursor(ctx, conversation, c, message)
 }
 
 // MarkCustomerRead 在事务内更新/创建 IM 客户已读游标。
-func (s *conversationReadStateService) MarkCustomerRead(ctx *sqls.TxContext, conversation *models.Conversation, external *openidentity.ExternalUser, message *models.Message, now time.Time) (*models.ConversationReadState, error) {
+func (s *conversationReadStateService) MarkCustomerRead(ctx *sqls.TxContext, conversation *models.Conversation, external *openidentity.ExternalUser, message *models.Message) (*models.ConversationReadState, error) {
 	c, err := customerReaderCursor(external)
 	if err != nil {
 		return nil, err
 	}
-	return s.markReadTxWithCursor(ctx, conversation, c, message, now)
+	return s.markReadTxWithCursor(ctx, conversation, c, message)
 }
 
-func (s *conversationReadStateService) markReadTxWithCursor(ctx *sqls.TxContext, conversation *models.Conversation, c readerCursor, message *models.Message, now time.Time) (*models.ConversationReadState, error) {
+func (s *conversationReadStateService) markReadTxWithCursor(ctx *sqls.TxContext, conversation *models.Conversation, c readerCursor, message *models.Message) (*models.ConversationReadState, error) {
 	if ctx == nil || conversation == nil || message == nil {
 		return nil, nil
 	}
 	if c.readerType != enums.IMSenderTypeAgent && c.readerType != enums.IMSenderTypeCustomer {
 		return nil, errorsx.InvalidParam("不支持的已读操作类型")
 	}
+
+	now := time.Now()
 
 	item := &models.ConversationReadState{}
 	err := ctx.Tx.Where("conversation_id = ? AND reader_type = ? AND reader_id = ? AND external_reader_id = ?",

@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { createAdminWebSocketUrl } from "@/lib/api/admin"
 import { type AgentMessage } from "@/lib/api/agent"
+import { shouldReloadConversationListForRealtimePatch } from "@/lib/agent-conversation-realtime"
 import { readSession } from "@/lib/auth"
 import {
   normalizeRealtimeMessage,
@@ -131,6 +132,11 @@ export function useAgentConversationRealtime() {
 
           if (eventType.startsWith("conversation.") && payload) {
             store.applyRealtimeConversationChanged(payload)
+            if (shouldReloadConversationListForRealtimePatch(payload)) {
+              void store.resyncRealtimeData(conversationId).catch((error) => {
+                toast.error(error instanceof Error ? error.message : "同步会话列表失败")
+              })
+            }
           }
         } catch {
           // ignore invalid ws payload
