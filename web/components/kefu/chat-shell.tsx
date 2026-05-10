@@ -4,6 +4,7 @@ import {
   HeadphonesIcon,
   Maximize2Icon,
   Minimize2Icon,
+  MoreHorizontalIcon,
   MinusIcon,
   RotateCwIcon,
   XIcon,
@@ -42,6 +43,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 
 const windowActionButtonClass =
@@ -60,6 +67,16 @@ function WindowActionButton({
       {...props}
     />
   )
+}
+
+function getMobileStatusDotClass(status: string) {
+  if (status === "connected") {
+    return "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)]"
+  }
+  if (status === "connecting") {
+    return "bg-amber-500 shadow-[0_0_0_3px_rgba(245,158,11,0.16)]"
+  }
+  return "bg-muted-foreground shadow-[0_0_0_3px_rgba(148,163,184,0.14)]"
 }
 
 function useKefuSystemTheme() {
@@ -279,22 +296,85 @@ export function KefuChatShell() {
       style={{ "--primary": themeColor } as CSSProperties}
     >
       <section className="flex h-full w-full flex-col overflow-hidden bg-card text-card-foreground">
-        <header className="shrink-0 border-b border-primary/[0.10] bg-primary/[0.06] px-3 py-2.5 shadow-[0_10px_26px_rgba(15,23,42,0.06)] dark:border-primary/20 dark:bg-primary/10 dark:shadow-none sm:px-4 sm:py-3">
+        <header className="shrink-0 border-b border-border/80 bg-card px-3 py-2 shadow-none dark:border-border/70 sm:border-primary/[0.10] sm:bg-primary/[0.06] sm:px-4 sm:py-3 sm:shadow-[0_10px_26px_rgba(15,23,42,0.06)] sm:dark:border-primary/20 sm:dark:bg-primary/10 sm:dark:shadow-none">
           <div className="flex min-w-0 items-center justify-between gap-2 sm:gap-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-[0_8px_18px_rgba(37,99,235,0.18)]">
+              <div className="hidden size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-[0_8px_18px_rgba(37,99,235,0.18)] sm:flex">
                 <HeadphonesIcon className="size-[18px]" />
               </div>
               <div className="min-w-0">
-                <div className="truncate text-base font-semibold text-foreground">
-                  {title}
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className={cn(
+                      "size-1.5 shrink-0 rounded-full sm:hidden",
+                      getMobileStatusDotClass(status)
+                    )}
+                    aria-hidden="true"
+                  />
+                  <div className="truncate text-sm font-semibold text-foreground sm:text-base">
+                    {title}
+                  </div>
                 </div>
-                <div className="mt-0.5 truncate text-xs text-muted-foreground sm:mt-1">
+                <div className="hidden truncate text-xs text-muted-foreground sm:mt-1 sm:block">
                   {subtitle}
                 </div>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <div className="flex shrink-0 items-center gap-0.5 sm:hidden">
+              {!isEmbedded && status !== "connected" ? (
+                <WindowActionButton
+                  onClick={retry}
+                  aria-label="重新连接"
+                  title="重新连接"
+                >
+                  <RotateCwIcon className="size-4" />
+                </WindowActionButton>
+              ) : null}
+              {isEmbedded ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={<WindowActionButton aria-label="更多操作" title="更多操作" />}
+                  >
+                    <MoreHorizontalIcon className="size-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-36">
+                    <DropdownMenuItem onClick={retry}>
+                      <RotateCwIcon className="size-4" />
+                      重新连接
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleMinimize}>
+                      <MinusIcon className="size-4" />
+                      收起窗口
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleToggleMaximize}>
+                      {isMaximized ? (
+                        <Minimize2Icon className="size-4" />
+                      ) : (
+                        <Maximize2Icon className="size-4" />
+                      )}
+                      {isMaximized ? "取消最大化" : "最大化"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => setIsCloseDialogOpen(true)}
+                    >
+                      <XIcon className="size-4" />
+                      关闭窗口
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <WindowActionButton
+                  onClick={() => setIsCloseDialogOpen(true)}
+                  aria-label="关闭聊天窗口"
+                  title="关闭聊天窗口"
+                  className="hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/45 dark:hover:text-rose-300"
+                >
+                  <XIcon className="size-4" />
+                </WindowActionButton>
+              )}
+            </div>
+            <div className="hidden shrink-0 items-center gap-1 sm:flex sm:gap-2">
               {status !== "connected" ? (
                 <KefuConnectionStatus status={status} />
               ) : null}
