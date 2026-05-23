@@ -44,6 +44,12 @@ import {
   type Tag,
   type TagTree,
 } from "@/lib/api/admin"
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
 import { EditDialog } from "./_components/edit"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -531,9 +537,28 @@ export default function DashboardTagsPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-end">
-          <div className="relative min-w-72">
+      <DashboardPage>
+        <DashboardToolbar
+          actions={
+            <>
+              <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
+                <RefreshCwIcon className={loading ? "animate-spin" : ""} />
+                刷新
+              </Button>
+              <Button variant="outline" onClick={expandAll} disabled={loading}>
+                展开全部
+              </Button>
+              <Button variant="outline" onClick={collapseAll} disabled={loading}>
+                折叠全部
+              </Button>
+              <Button onClick={openCreateDialog}>
+                <PlusIcon />
+                新建标签
+              </Button>
+            </>
+          }
+        >
+          <div className="relative w-full sm:w-72">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={keywordInput}
@@ -558,23 +583,8 @@ export default function DashboardTagsPage() {
             <SearchIcon />
             查询
           </Button>
-          <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
-            <RefreshCwIcon className={loading ? "animate-spin" : ""} />
-            刷新
-          </Button>
-          <Button variant="outline" onClick={expandAll} disabled={loading}>
-            展开全部
-          </Button>
-          <Button variant="outline" onClick={collapseAll} disabled={loading}>
-            折叠全部
-          </Button>
-          <Button onClick={openCreateDialog}>
-            <PlusIcon />
-            新建
-          </Button>
-        </div>
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border bg-background">
+        </DashboardToolbar>
+        <DashboardTableShell>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -610,19 +620,19 @@ export default function DashboardTagsPage() {
                       />
                     ))}
                   </SortableContext>
-                  {!loading && flatList.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
-                        没有匹配的标签
-                      </TableCell>
-                    </TableRow>
+                  {loading || flatList.length === 0 ? (
+                    <DashboardTableStateRow
+                      colSpan={6}
+                      loading={loading}
+                      loadingText="正在加载标签..."
+                      emptyText="没有匹配的标签"
+                    />
                   ) : null}
                 </TableBody>
               </Table>
             </DndContext>
-          </div>
-        </div>
-      </div>
+        </DashboardTableShell>
+      </DashboardPage>
       <EditDialog
         open={dialogOpen}
         saving={saving}

@@ -5,22 +5,16 @@ import { KeyRoundIcon, RefreshCwIcon, RouteIcon, SearchIcon } from "lucide-react
 import { toast } from "sonner"
 
 import {
-  fetchPermissions,
-  type AdminPermission,
-  type PageResult,
-} from "@/lib/api/admin"
-import { Status, StatusLabels } from "@/lib/generated/enums"
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
+import { ListPagination } from "@/components/list-pagination"
+import { OptionCombobox } from "@/components/option-combobox"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ListPagination } from "@/components/list-pagination"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -29,6 +23,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  fetchPermissions,
+  type AdminPermission,
+  type PageResult,
+} from "@/lib/api/admin"
+import { Status, StatusLabels } from "@/lib/generated/enums"
 
 const listStatusOptions = [
   { value: "all", label: "全部状态" },
@@ -36,13 +36,6 @@ const listStatusOptions = [
   { value: String(Status.Disabled), label: StatusLabels[Status.Disabled] },
   { value: String(Status.Deleted), label: StatusLabels[Status.Deleted] },
 ] as const
-
-function getStatusLabel(
-  value: string,
-  options: ReadonlyArray<{ value: string; label: string }>
-) {
-  return options.find((item) => item.value === value)?.label ?? "请选择状态"
-}
 
 export default function DashboardPermissionsPage() {
   const [keywordInput, setKeywordInput] = useState("")
@@ -81,10 +74,6 @@ export default function DashboardPermissionsPage() {
     void loadData()
   }, [loadData])
 
-  function handleStatusFilterChange(value: string | null) {
-    setStatusFilterInput(value ?? "all")
-  }
-
   function applyFilters() {
     setKeyword(keywordInput)
     setGroupName(groupNameInput)
@@ -109,9 +98,16 @@ export default function DashboardPermissionsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-      <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-end">
-        <div className="relative min-w-72">
+    <DashboardPage>
+      <DashboardToolbar
+        actions={
+          <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
+            <RefreshCwIcon className={loading ? "animate-spin" : ""} />
+            刷新
+          </Button>
+        }
+      >
+        <div className="relative w-full sm:w-72">
           <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={keywordInput}
@@ -126,34 +122,36 @@ export default function DashboardPermissionsPage() {
           onChange={(event) => setGroupNameInput(event.target.value)}
           onKeyDown={handleFilterKeyDown}
           placeholder="按分组筛选"
-          className="w-full xl:w-48"
+          className="w-full sm:w-44"
         />
-        <Select
-          value={statusFilterInput}
-          onValueChange={handleStatusFilterChange}
-        >
-          <SelectTrigger className="w-full xl:w-36">
-            <SelectValue>{getStatusLabel(statusFilterInput, listStatusOptions)}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {listStatusOptions.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-36">
+          <OptionCombobox
+            value={statusFilterInput}
+            onChange={setStatusFilterInput}
+            placeholder="全部状态"
+            options={[...listStatusOptions]}
+          />
+        </div>
         <Button variant="outline" onClick={applyFilters} disabled={loading}>
           <SearchIcon />
           查询
         </Button>
-        <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
-          <RefreshCwIcon className={loading ? "animate-spin" : ""} />
-          刷新列表
-        </Button>
-      </div>
-      <div className="space-y-4">
-        <div className="overflow-hidden rounded-2xl border bg-background">
+      </DashboardToolbar>
+      <DashboardTableShell
+        pagination={
+          <ListPagination
+            page={result.page.page}
+            total={result.page.total}
+            limit={limit}
+            loading={loading}
+            onPageChange={handlePageChange}
+            onLimitChange={(nextLimit) => {
+              setLimit(nextLimit)
+              setPage(1)
+            }}
+          />
+        }
+      >
           <Table>
             <TableHeader className="bg-muted/40">
               <TableRow>
@@ -202,28 +200,17 @@ export default function DashboardPermissionsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {!loading && result.results.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
-                    没有匹配的权限数据
-                  </TableCell>
-                </TableRow>
+              {loading || result.results.length === 0 ? (
+                <DashboardTableStateRow
+                  colSpan={5}
+                  loading={loading}
+                  loadingText="正在加载权限数据..."
+                  emptyText="没有匹配的权限数据"
+                />
               ) : null}
             </TableBody>
           </Table>
-        </div>
-        <ListPagination
-          page={result.page.page}
-          total={result.page.total}
-          limit={limit}
-          loading={loading}
-          onPageChange={handlePageChange}
-          onLimitChange={(nextLimit) => {
-            setLimit(nextLimit)
-            setPage(1)
-          }}
-        />
-      </div>
-    </div>
+      </DashboardTableShell>
+    </DashboardPage>
   )
 }

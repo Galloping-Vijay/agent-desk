@@ -23,6 +23,12 @@ import {
   type CreateAdminChannelPayload,
   type PageResult,
 } from "@/lib/api/admin"
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
 import { OptionCombobox } from "@/components/option-combobox"
 import { EditDialog } from "./_components/edit"
 import { Badge } from "@/components/ui/badge"
@@ -205,16 +211,29 @@ export default function DashboardChannelsPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div className="flex flex-col gap-2 xl:flex-row xl:flex-wrap xl:items-center xl:justify-end">
+      <DashboardPage>
+        <DashboardToolbar
+          actions={
+            <>
+              <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
+                <RefreshCwIcon className={loading ? "animate-spin" : ""} />
+                刷新
+              </Button>
+              <Button onClick={openCreateDialog}>
+                <PlusIcon />
+                新建渠道
+              </Button>
+            </>
+          }
+        >
           <Input
             value={nameInput}
             onChange={(event) => setNameInput(event.target.value)}
             onKeyDown={handleFilterKeyDown}
             placeholder="按渠道名称筛选"
-            className="w-full xl:w-56"
+            className="w-full sm:w-56"
           />
-          <div className="relative min-w-72">
+          <div className="relative w-full sm:w-72">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={channelIdInput}
@@ -224,7 +243,7 @@ export default function DashboardChannelsPage() {
               className="pl-9"
             />
           </div>
-          <div className="w-full xl:w-40">
+          <div className="w-full sm:w-40">
             <OptionCombobox
               value={channelTypeInput}
               options={[...channelTypeOptions]}
@@ -234,7 +253,7 @@ export default function DashboardChannelsPage() {
               onChange={setChannelTypeInput}
             />
           </div>
-          <div className="w-full xl:w-36">
+          <div className="w-full sm:w-36">
             <OptionCombobox
               value={statusInput}
               options={[...statusOptions]}
@@ -248,17 +267,23 @@ export default function DashboardChannelsPage() {
             <SearchIcon />
             查询
           </Button>
-          <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
-            <RefreshCwIcon className={loading ? "animate-spin" : ""} />
-            刷新列表
-          </Button>
-          <Button onClick={openCreateDialog}>
-            <PlusIcon />
-            新建渠道
-          </Button>
-        </div>
+        </DashboardToolbar>
 
-        <div className="rounded-xl border bg-card">
+        <DashboardTableShell
+          pagination={
+            <ListPagination
+              page={result.page.page}
+              limit={result.page.limit}
+              total={result.page.total}
+              loading={loading}
+              onPageChange={(nextPage) => setPage(nextPage)}
+              onLimitChange={(nextLimit) => {
+                setLimit(nextLimit)
+                setPage(1)
+              }}
+            />
+          }
+        >
           <Table>
             <TableHeader>
               <TableRow>
@@ -271,12 +296,13 @@ export default function DashboardChannelsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {result.results.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
-                    {loading ? "正在加载接入渠道..." : "暂无接入渠道"}
-                  </TableCell>
-                </TableRow>
+              {loading || result.results.length === 0 ? (
+                <DashboardTableStateRow
+                  colSpan={6}
+                  loading={loading}
+                  loadingText="正在加载接入渠道..."
+                  emptyText="暂无接入渠道"
+                />
               ) : null}
               {result.results.map((item) => (
                 <TableRow key={item.id}>
@@ -338,20 +364,8 @@ export default function DashboardChannelsPage() {
               ))}
             </TableBody>
           </Table>
-          <div className="border-t px-4 py-3">
-            <ListPagination
-              page={result.page.page}
-              limit={result.page.limit}
-              total={result.page.total}
-              onPageChange={(nextPage) => setPage(nextPage)}
-              onLimitChange={(nextLimit) => {
-                setLimit(nextLimit)
-                setPage(1)
-              }}
-            />
-          </div>
-        </div>
-      </div>
+        </DashboardTableShell>
+      </DashboardPage>
 
       <EditDialog
         open={dialogOpen}

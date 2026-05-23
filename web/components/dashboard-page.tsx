@@ -1,0 +1,121 @@
+import type { ReactNode } from "react"
+
+import { cn } from "@/lib/utils"
+import { TableCell, TableRow } from "@/components/ui/table"
+
+export function DashboardPage({
+  className,
+  children,
+}: {
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <div className={cn("flex flex-1 flex-col gap-5 p-4 lg:p-6", className)}>
+      {children}
+    </div>
+  )
+}
+
+export function DashboardPageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string
+  description?: ReactNode
+  actions?: ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="min-w-0 space-y-1">
+        <h1 className="truncate text-xl font-semibold tracking-tight">{title}</h1>
+        {description ? (
+          <div className="text-sm leading-6 text-muted-foreground">
+            {description}
+          </div>
+        ) : null}
+      </div>
+      {actions ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+      ) : null}
+    </div>
+  )
+}
+
+export function DashboardToolbar({
+  className,
+  actions,
+  children,
+}: {
+  className?: string
+  actions?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-3 rounded-lg border bg-card p-3 lg:flex-row lg:items-center lg:justify-between",
+        className
+      )}
+    >
+      <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        {children}
+      </div>
+      {actions ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+      ) : null}
+    </div>
+  )
+}
+
+export function DashboardTableShell({
+  className,
+  pagination,
+  children,
+}: {
+  className?: string
+  pagination?: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <div className={cn("space-y-4", className)}>
+      <div className="overflow-hidden rounded-lg border bg-card text-card-foreground">
+        {children}
+      </div>
+      {pagination ? <div>{pagination}</div> : null}
+    </div>
+  )
+}
+
+export function DashboardTableStateRow({
+  colSpan,
+  loading,
+  loadingText = "正在加载数据...",
+  emptyText = "暂无数据",
+}: {
+  colSpan: number
+  loading?: boolean
+  loadingText?: string
+  emptyText?: string
+}) {
+  return (
+    <TableRow>
+      <TableCell colSpan={colSpan} className="py-12 text-center text-muted-foreground">
+        {loading ? loadingText : emptyText}
+      </TableCell>
+    </TableRow>
+  )
+}
+
+export function DashboardTableSummary({
+  children,
+}: {
+  children: ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between text-sm text-muted-foreground">
+      {children}
+    </div>
+  )
+}

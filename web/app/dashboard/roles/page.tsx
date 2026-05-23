@@ -41,6 +41,13 @@ import {
   type PageResult,
   updateRoleSort,
 } from "@/lib/api/admin"
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardTableSummary,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
 import { cn } from "@/lib/utils"
 import { AssignPermissionsDrawer } from "./_components/assign-permissions"
 import { CreateRoleDrawer } from "./_components/create"
@@ -311,23 +318,43 @@ export default function DashboardRolesPage() {
   }, [])
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-        <Button
-          type="button"
-          onClick={() => setCreatingOpen(true)}
-          disabled={loading || sorting}
-        >
-          <PlusIcon className="size-4" />
-          添加角色
-        </Button>
-        <Button onClick={() => void loadRoles()} disabled={loading || sorting}>
-          <RefreshCwIcon className={cn((loading || sorting) && "animate-spin")} />
-          刷新列表
-        </Button>
-      </div>
-      <div className="space-y-4">
-        <div className="overflow-hidden rounded-2xl border bg-background">
+    <DashboardPage>
+      <DashboardToolbar
+        actions={
+          <>
+            <Button
+              type="button"
+              onClick={() => setCreatingOpen(true)}
+              disabled={loading || sorting}
+            >
+              <PlusIcon className="size-4" />
+              添加角色
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => void loadRoles()}
+              disabled={loading || sorting}
+            >
+              <RefreshCwIcon className={cn((loading || sorting) && "animate-spin")} />
+              刷新
+            </Button>
+          </>
+        }
+      >
+        <div className="text-sm text-muted-foreground">
+          拖拽行可调整角色顺序
+        </div>
+      </DashboardToolbar>
+      <DashboardTableShell
+        pagination={
+          <DashboardTableSummary>
+            <span>
+              第 {result.page.page} 页 / 每页 {result.page.limit} 条
+            </span>
+            <span>共 {result.page.total} 条记录</span>
+          </DashboardTableSummary>
+        }
+      >
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -361,27 +388,18 @@ export default function DashboardRolesPage() {
                     />
                   ))}
                 </SortableContext>
-                {!loading && result.results.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="py-12 text-center text-muted-foreground"
-                    >
-                      暂无角色数据
-                    </TableCell>
-                  </TableRow>
+                {loading || result.results.length === 0 ? (
+                  <DashboardTableStateRow
+                    colSpan={6}
+                    loading={loading}
+                    loadingText="正在加载角色数据..."
+                    emptyText="暂无角色数据"
+                  />
                 ) : null}
               </TableBody>
             </Table>
           </DndContext>
-        </div>
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
-            第 {result.page.page} 页 / 每页 {result.page.limit} 条
-          </span>
-          <span>共 {result.page.total} 条记录</span>
-        </div>
-      </div>
+      </DashboardTableShell>
       <AssignPermissionsDrawer
         open={!!assigningRole}
         saving={savingPermissions}
@@ -398,6 +416,6 @@ export default function DashboardRolesPage() {
         onOpenChange={handleCreateDrawerOpenChange}
         onSubmit={handleCreateRole}
       />
-    </div>
+    </DashboardPage>
   )
 }

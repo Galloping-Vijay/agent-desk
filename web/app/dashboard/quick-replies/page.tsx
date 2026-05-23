@@ -12,6 +12,32 @@ import {
 import { toast } from "sonner"
 
 import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
+import { ListPagination } from "@/components/list-pagination"
+import { OptionCombobox } from "@/components/option-combobox"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { ButtonGroup } from "@/components/ui/button-group"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
   createQuickReply,
   deleteQuickReply,
   fetchQuickReplies,
@@ -23,32 +49,6 @@ import {
 import { getEnumLabel, getEnumOptions } from "@/lib/enums"
 import { Status, StatusLabels } from "@/lib/generated/enums"
 import { EditDialog } from "./_components/edit"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { ButtonGroup } from "@/components/ui/button-group"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { ListPagination } from "@/components/list-pagination"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 
 const listStatusOptions = [
   { value: "all", label: "全部状态" },
@@ -59,13 +59,6 @@ const listStatusOptions = [
       label: item.label,
     })),
 ] as const
-
-function getStatusLabel(
-  value: string,
-  options: ReadonlyArray<{ value: string; label: string }>
-) {
-  return options.find((item) => item.value === value)?.label ?? "请选择状态"
-}
 
 export default function DashboardQuickRepliesPage() {
   const [keywordInput, setKeywordInput] = useState("")
@@ -107,10 +100,6 @@ export default function DashboardQuickRepliesPage() {
   useEffect(() => {
     void loadData()
   }, [loadData])
-
-  function handleStatusFilterChange(value: string | null) {
-    setStatusFilterInput(value ?? "all")
-  }
 
   function applyFilters() {
     setKeyword(keywordInput)
@@ -221,9 +210,22 @@ export default function DashboardQuickRepliesPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-end">
-          <div className="relative min-w-72">
+      <DashboardPage>
+        <DashboardToolbar
+          actions={
+            <>
+              <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
+                <RefreshCwIcon className={loading ? "animate-spin" : undefined} />
+                刷新
+              </Button>
+              <Button onClick={openCreateDialog}>
+                <PlusIcon />
+                新建快捷回复
+              </Button>
+            </>
+          }
+        >
+          <div className="relative w-full sm:w-72">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={keywordInput}
@@ -238,34 +240,36 @@ export default function DashboardQuickRepliesPage() {
             onChange={(event) => setGroupNameInput(event.target.value)}
             onKeyDown={handleFilterKeyDown}
             placeholder="按分组筛选"
-            className="w-full xl:w-48"
+            className="w-full sm:w-44"
           />
-          <Select
-            value={statusFilterInput}
-            onValueChange={handleStatusFilterChange}
-          >
-            <SelectTrigger className="w-full xl:w-36">
-              <SelectValue>{getStatusLabel(statusFilterInput, listStatusOptions)}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {listStatusOptions.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="w-full sm:w-36">
+            <OptionCombobox
+              value={statusFilterInput}
+              onChange={setStatusFilterInput}
+              placeholder="全部状态"
+              options={[...listStatusOptions]}
+            />
+          </div>
           <Button variant="outline" onClick={applyFilters} disabled={loading}>
             <SearchIcon />
             查询
           </Button>
-          <Button onClick={openCreateDialog}>
-            <PlusIcon />
-            新建
-          </Button>
-        </div>
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border bg-background">
+        </DashboardToolbar>
+        <DashboardTableShell
+          pagination={
+            <ListPagination
+              page={result.page.page}
+              total={result.page.total}
+              limit={limit}
+              loading={loading}
+              onPageChange={handlePageChange}
+              onLimitChange={(nextLimit) => {
+                setLimit(nextLimit)
+                setPage(1)
+              }}
+            />
+          }
+        >
             <Table>
               <TableHeader className="bg-muted/40">
                 <TableRow>
@@ -282,7 +286,7 @@ export default function DashboardQuickRepliesPage() {
                   <TableRow key={item.id}>
                     <TableCell>
                       <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex size-10 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                        <div className="mt-0.5 flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
                           <FileTextIcon className="size-4" />
                         </div>
                         <div className="min-w-0">
@@ -345,29 +349,18 @@ export default function DashboardQuickRepliesPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {!loading && result.results.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
-                      没有匹配的快捷回复
-                    </TableCell>
-                  </TableRow>
+                {loading || result.results.length === 0 ? (
+                  <DashboardTableStateRow
+                    colSpan={6}
+                    loading={loading}
+                    loadingText="正在加载快捷回复..."
+                    emptyText="没有匹配的快捷回复"
+                  />
                 ) : null}
               </TableBody>
             </Table>
-          </div>
-          <ListPagination
-            page={result.page.page}
-            total={result.page.total}
-            limit={limit}
-            loading={loading}
-            onPageChange={handlePageChange}
-            onLimitChange={(nextLimit) => {
-              setLimit(nextLimit)
-              setPage(1)
-            }}
-          />
-        </div>
-      </div>
+        </DashboardTableShell>
+      </DashboardPage>
       <EditDialog
         open={dialogOpen}
         saving={saving}
