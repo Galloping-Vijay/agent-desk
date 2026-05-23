@@ -61,7 +61,11 @@ func SkillDefinitionGetList_all(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, results)
 }
 
-func SkillDefinitionGetBy(ctx *gin.Context, id int64) {
+func SkillDefinitionGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionSkillDefinitionView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

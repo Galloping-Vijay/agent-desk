@@ -50,7 +50,11 @@ func AgentTeamGetList_all(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, results)
 }
 
-func AgentTeamGetBy(ctx *gin.Context, id int64) {
+func AgentTeamGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionAgentTeamView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

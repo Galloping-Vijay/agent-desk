@@ -37,7 +37,11 @@ func TagGetList_all(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, results)
 }
 
-func TagGetBy(ctx *gin.Context, id int64) {
+func TagGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionTagView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

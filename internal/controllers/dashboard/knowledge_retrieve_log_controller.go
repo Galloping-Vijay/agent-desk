@@ -48,7 +48,11 @@ func KnowledgeRetrieveLogAnyList(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, &web.PageResult{Results: results, Page: paging})
 }
 
-func KnowledgeRetrieveLogGetBy(ctx *gin.Context, id int64) {
+func KnowledgeRetrieveLogGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionKnowledgeDocumentView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

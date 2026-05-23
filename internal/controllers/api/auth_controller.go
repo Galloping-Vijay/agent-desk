@@ -32,7 +32,7 @@ func Login(ctx *gin.Context) {
 func WxWorkLogin(ctx *gin.Context) {
 	loginURL, err := services.WxWorkLoginService.BuildWxWorkLoginURL(ctx.Query("next"))
 	if err != nil {
-		redirectWxWorkError(ctx, err.Error())
+		ctx.Redirect(http.StatusFound, "/login?wxworkError="+url.QueryEscape(wxWorkErrorMessage(err.Error())))
 		return
 	}
 	ctx.Redirect(http.StatusFound, loginURL)
@@ -41,7 +41,7 @@ func WxWorkLogin(ctx *gin.Context) {
 func WxWorkQRLogin(ctx *gin.Context) {
 	loginURL, err := services.WxWorkLoginService.BuildWxWorkQRCodeLoginURL(ctx.Query("next"))
 	if err != nil {
-		redirectWxWorkError(ctx, err.Error())
+		ctx.Redirect(http.StatusFound, "/login?wxworkError="+url.QueryEscape(wxWorkErrorMessage(err.Error())))
 		return
 	}
 	ctx.Redirect(http.StatusFound, loginURL)
@@ -57,7 +57,7 @@ func WxWorkCallback(ctx *gin.Context) {
 		ctx.GetHeader("User-Agent"),
 	)
 	if err != nil {
-		redirectWxWorkError(ctx, err.Error())
+		ctx.Redirect(http.StatusFound, "/login?wxworkError="+url.QueryEscape(wxWorkErrorMessage(err.Error())))
 		return
 	}
 	ctx.Redirect(http.StatusFound, "/dashboard/login/wxwork/callback?ticket="+url.QueryEscape(ticket)+"&next="+url.QueryEscape(next))
@@ -94,9 +94,9 @@ func Profile(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, ret)
 }
 
-func redirectWxWorkError(ctx *gin.Context, message string) {
+func wxWorkErrorMessage(message string) string {
 	if idx := strings.Index(message, ": "); idx >= 0 {
 		message = message[idx+2:]
 	}
-	ctx.Redirect(http.StatusFound, "/login?wxworkError="+url.QueryEscape(message))
+	return message
 }

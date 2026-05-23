@@ -13,7 +13,11 @@ import (
 	"github.com/mlogclub/simple/web"
 )
 
-func ConversationGetBy(ctx *gin.Context, id int64) {
+func ConversationGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if services.ChannelService.GetEnabledChannel(ctx) == nil {
 		httpx.WriteJSON(ctx, web.JsonErrorMsg("接入渠道未初始化"))
 		return

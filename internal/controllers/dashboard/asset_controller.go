@@ -40,7 +40,11 @@ func AssetAnyList(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, &web.PageResult{Results: results, Page: paging})
 }
 
-func AssetGetBy(ctx *gin.Context, id int64) {
+func AssetGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionAssetView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

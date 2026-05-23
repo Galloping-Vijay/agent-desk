@@ -46,7 +46,11 @@ func AgentRunLogAnyList(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, &web.PageResult{Results: results, Page: paging})
 }
 
-func AgentRunLogGetBy(ctx *gin.Context, id int64) {
+func AgentRunLogGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionConversationView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

@@ -59,7 +59,11 @@ func RoleGetList_all(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, results)
 }
 
-func RoleGetBy(ctx *gin.Context, id int64) {
+func RoleGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionRoleView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

@@ -93,7 +93,11 @@ func AgentTeamSchedulePostBatch_generate(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, builders.BuildAgentTeamScheduleBatchGenerateResponse(ret))
 }
 
-func AgentTeamScheduleGetBy(ctx *gin.Context, id int64) {
+func AgentTeamScheduleGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionAgentTeamScheduleView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

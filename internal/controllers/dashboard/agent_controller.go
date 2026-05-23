@@ -44,7 +44,11 @@ func AgentGetList_all(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, builders.BuildAgentProfileList(list))
 }
 
-func AgentGetBy(ctx *gin.Context, id int64) {
+func AgentGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionAgentView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

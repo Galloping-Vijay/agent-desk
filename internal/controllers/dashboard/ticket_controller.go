@@ -118,7 +118,11 @@ func TicketPostDelete_view(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, nil)
 }
 
-func TicketGetBy(ctx *gin.Context, id int64) {
+func TicketGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionTicketView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return

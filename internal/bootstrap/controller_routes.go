@@ -1,26 +1,12 @@
 package bootstrap
 
 import (
-	"net/http"
-	"strconv"
-
 	"cs-agent/internal/controllers/api"
 	"cs-agent/internal/controllers/dashboard"
 	"cs-agent/internal/controllers/third"
-	"cs-agent/internal/pkg/httpx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mlogclub/simple/web"
 )
-
-func pathInt64(ctx *gin.Context, name string) (int64, bool) {
-	value, err := strconv.ParseInt(ctx.Param(name), 10, 64)
-	if err != nil {
-		httpx.WriteHttpStatusJSON(ctx, http.StatusBadRequest, web.JsonErrorMsg("路径参数错误"))
-		return 0, false
-	}
-	return value, true
-}
 
 func registerApiAuthRoutes(group *gin.RouterGroup) {
 	group.POST("/login", api.Login)
@@ -41,13 +27,7 @@ func registerApiCustomerRoutes(group *gin.RouterGroup) {
 }
 
 func registerApiConversationRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		api.ConversationGetBy(ctx, id)
-	})
+	group.GET("/:id", api.ConversationGetBy)
 	group.POST("/close", api.ConversationPostClose)
 	group.POST("/create_or_match", api.ConversationPostCreate_or_match)
 }
@@ -65,13 +45,7 @@ func registerDashboardDashboardRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardUserRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.UserGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.UserGetBy)
 	group.POST("/assign_role", dashboard.UserPostAssign_role)
 	group.POST("/change_password", dashboard.UserPostChange_password)
 	group.POST("/create", dashboard.UserPostCreate)
@@ -84,13 +58,7 @@ func registerDashboardUserRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardCompanyRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.CompanyGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.CompanyGetBy)
 	group.POST("/create", dashboard.CompanyPostCreate)
 	group.POST("/delete", dashboard.CompanyPostDelete)
 	group.Any("/list", dashboard.CompanyAnyList)
@@ -99,13 +67,7 @@ func registerDashboardCompanyRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardCustomerRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.CustomerGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.CustomerGetBy)
 	group.POST("/create", dashboard.CustomerPostCreate)
 	group.POST("/delete", dashboard.CustomerPostDelete)
 	group.POST("/list", dashboard.CustomerPostList)
@@ -122,13 +84,7 @@ func registerDashboardCustomerContactRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardRoleRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.RoleGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.RoleGetBy)
 	group.POST("/assign_permission", dashboard.RolePostAssign_permission)
 	group.POST("/create", dashboard.RolePostCreate)
 	group.POST("/delete", dashboard.RolePostDelete)
@@ -140,13 +96,7 @@ func registerDashboardRoleRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardPermissionRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.PermissionGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.PermissionGetBy)
 	group.Any("/list", dashboard.PermissionAnyList)
 }
 
@@ -157,13 +107,7 @@ func registerDashboardSessionRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardTagRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.TagGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.TagGetBy)
 	group.POST("/create", dashboard.TagPostCreate)
 	group.POST("/delete", dashboard.TagPostDelete)
 	group.Any("/list", dashboard.TagAnyList)
@@ -174,13 +118,7 @@ func registerDashboardTagRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardConversationRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.ConversationGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.ConversationGetBy)
 	group.POST("/add_tag", dashboard.ConversationPostAdd_tag)
 	group.POST("/assign", dashboard.ConversationPostAssign)
 	group.POST("/close", dashboard.ConversationPostClose)
@@ -199,13 +137,7 @@ func registerDashboardConversationRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardTicketRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.TicketGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.TicketGetBy)
 	group.POST("/assign", dashboard.TicketPostAssign)
 	group.POST("/change_status", dashboard.TicketPostChange_status)
 	group.POST("/create", dashboard.TicketPostCreate)
@@ -237,13 +169,7 @@ func registerDashboardQuickReplyRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardChannelRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.ChannelGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.ChannelGetBy)
 	group.POST("/create", dashboard.ChannelPostCreate)
 	group.POST("/delete", dashboard.ChannelPostDelete)
 	group.Any("/list", dashboard.ChannelAnyList)
@@ -254,13 +180,7 @@ func registerDashboardChannelRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardAgentRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.AgentGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.AgentGetBy)
 	group.POST("/create", dashboard.AgentPostCreate)
 	group.POST("/delete", dashboard.AgentPostDelete)
 	group.Any("/list", dashboard.AgentAnyList)
@@ -269,13 +189,7 @@ func registerDashboardAgentRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardAgentTeamRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.AgentTeamGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.AgentTeamGetBy)
 	group.POST("/create", dashboard.AgentTeamPostCreate)
 	group.POST("/delete", dashboard.AgentTeamPostDelete)
 	group.Any("/list", dashboard.AgentTeamAnyList)
@@ -284,13 +198,7 @@ func registerDashboardAgentTeamRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardAgentTeamScheduleRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.AgentTeamScheduleGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.AgentTeamScheduleGetBy)
 	group.POST("/batch_generate", dashboard.AgentTeamSchedulePostBatch_generate)
 	group.POST("/batch_preview", dashboard.AgentTeamSchedulePostBatch_preview)
 	group.Any("/calendar", dashboard.AgentTeamScheduleAnyCalendar)
@@ -301,13 +209,7 @@ func registerDashboardAgentTeamScheduleRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardAIAgentRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.AIAgentGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.AIAgentGetBy)
 	group.POST("/create", dashboard.AIAgentPostCreate)
 	group.POST("/delete", dashboard.AIAgentPostDelete)
 	group.Any("/list", dashboard.AIAgentAnyList)
@@ -318,13 +220,7 @@ func registerDashboardAIAgentRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardAIConfigRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.AIConfigGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.AIConfigGetBy)
 	group.POST("/create", dashboard.AIConfigPostCreate)
 	group.POST("/delete", dashboard.AIConfigPostDelete)
 	group.Any("/list", dashboard.AIConfigAnyList)
@@ -335,26 +231,14 @@ func registerDashboardAIConfigRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardAssetRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.AssetGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.AssetGetBy)
 	group.POST("/create", dashboard.AssetPostCreate)
 	group.POST("/delete", dashboard.AssetPostDelete)
 	group.Any("/list", dashboard.AssetAnyList)
 }
 
 func registerDashboardKnowledgeBaseRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.KnowledgeBaseGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.KnowledgeBaseGetBy)
 	group.POST("/create", dashboard.KnowledgeBasePostCreate)
 	group.POST("/delete", dashboard.KnowledgeBasePostDelete)
 	group.Any("/list", dashboard.KnowledgeBaseAnyList)
@@ -365,13 +249,7 @@ func registerDashboardKnowledgeBaseRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardKnowledgeDocumentRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.KnowledgeDocumentGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.KnowledgeDocumentGetBy)
 	group.POST("/create", dashboard.KnowledgeDocumentPostCreate)
 	group.POST("/delete", dashboard.KnowledgeDocumentPostDelete)
 	group.Any("/list", dashboard.KnowledgeDocumentAnyList)
@@ -379,13 +257,7 @@ func registerDashboardKnowledgeDocumentRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardKnowledgeFAQRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.KnowledgeFAQGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.KnowledgeFAQGetBy)
 	group.POST("/create", dashboard.KnowledgeFAQPostCreate)
 	group.POST("/delete", dashboard.KnowledgeFAQPostDelete)
 	group.Any("/list", dashboard.KnowledgeFAQAnyList)
@@ -399,35 +271,17 @@ func registerDashboardKnowledgeRetrieveRoutes(group *gin.RouterGroup) {
 }
 
 func registerDashboardKnowledgeRetrieveLogRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.KnowledgeRetrieveLogGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.KnowledgeRetrieveLogGetBy)
 	group.Any("/list", dashboard.KnowledgeRetrieveLogAnyList)
 }
 
 func registerDashboardAgentRunLogRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.AgentRunLogGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.AgentRunLogGetBy)
 	group.Any("/list", dashboard.AgentRunLogAnyList)
 }
 
 func registerDashboardSkillDefinitionRoutes(group *gin.RouterGroup) {
-	group.GET("/:id", func(ctx *gin.Context) {
-		id, ok := pathInt64(ctx, "id")
-		if !ok {
-			return
-		}
-		dashboard.SkillDefinitionGetBy(ctx, id)
-	})
+	group.GET("/:id", dashboard.SkillDefinitionGetBy)
 	group.POST("/create", dashboard.SkillDefinitionPostCreate)
 	group.POST("/debug_resume", dashboard.SkillDefinitionPostDebug_resume)
 	group.POST("/debug_run", dashboard.SkillDefinitionPostDebug_run)

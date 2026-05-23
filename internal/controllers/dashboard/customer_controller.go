@@ -29,7 +29,11 @@ func CustomerPostList(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, &web.PageResult{Results: builders.BuildCustomerList(list), Page: paging})
 }
 
-func CustomerGetBy(ctx *gin.Context, id int64) {
+func CustomerGetBy(ctx *gin.Context) {
+	id, ok := httpx.GetPathInt64(ctx, "id")
+	if !ok {
+		return
+	}
 	if _, err := services.AuthService.RequirePermission(ctx, constants.PermissionCustomerView); err != nil {
 		httpx.WriteJSON(ctx, err)
 		return
