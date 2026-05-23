@@ -3,6 +3,7 @@ package api
 import (
 	"cs-agent/internal/pkg/config"
 	"cs-agent/internal/pkg/dto/request"
+	"cs-agent/internal/pkg/httpx"
 	"cs-agent/internal/pkg/httpx/params"
 	"cs-agent/internal/services"
 	"net/http"
@@ -10,91 +11,92 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mlogclub/simple/web"
 )
 
-type AuthController struct {
-	Ctx *gin.Context
-}
-
-func (c *AuthController) PostLogin() *web.JsonResult {
+func Login(ctx *gin.Context) {
 	cfg := config.Current()
 	req := request.LoginRequest{}
-	if err := params.ReadJSON(c.Ctx, &req); err != nil {
-		return web.JsonError(err)
-	}
-
-	ret, err := services.AuthService.Login(req, cfg.Auth, c.Ctx.ClientIP(), c.Ctx.GetHeader("User-Agent"))
-	if err != nil {
-		return web.JsonError(err)
-	}
-	return web.JsonData(ret)
-}
-
-func (c *AuthController) GetWxwork_login() {
-	loginURL, err := services.WxWorkLoginService.BuildWxWorkLoginURL(c.Ctx.Query("next"))
-	if err != nil {
-		c.redirectWxWorkError(err.Error())
+	if err := params.ReadJSON(ctx, &req); err != nil {
+		httpx.WriteJSON(ctx, err)
 		return
 	}
-	c.Ctx.Redirect(http.StatusFound, loginURL)
-}
 
-func (c *AuthController) GetWxwork_qr_login() {
-	loginURL, err := services.WxWorkLoginService.BuildWxWorkQRCodeLoginURL(c.Ctx.Query("next"))
+	ret, err := services.AuthService.Login(req, cfg.Auth, ctx.ClientIP(), ctx.GetHeader("User-Agent"))
 	if err != nil {
-		c.redirectWxWorkError(err.Error())
+		httpx.WriteJSON(ctx, err)
 		return
 	}
-	c.Ctx.Redirect(http.StatusFound, loginURL)
+	httpx.WriteJSON(ctx, ret)
 }
 
-func (c *AuthController) GetWxwork_callback() {
+func WxWorkLogin(ctx *gin.Context) {
+	loginURL, err := services.WxWorkLoginService.BuildWxWorkLoginURL(ctx.Query("next"))
+	if err != nil {
+		redirectWxWorkError(ctx, err.Error())
+		return
+	}
+	ctx.Redirect(http.StatusFound, loginURL)
+}
+
+func WxWorkQRLogin(ctx *gin.Context) {
+	loginURL, err := services.WxWorkLoginService.BuildWxWorkQRCodeLoginURL(ctx.Query("next"))
+	if err != nil {
+		redirectWxWorkError(ctx, err.Error())
+		return
+	}
+	ctx.Redirect(http.StatusFound, loginURL)
+}
+
+func WxWorkCallback(ctx *gin.Context) {
 	cfg := config.Current()
 	ticket, next, err := services.WxWorkLoginService.LoginByWxWork(
-		c.Ctx.Query("code"),
-		c.Ctx.Query("state"),
+		ctx.Query("code"),
+		ctx.Query("state"),
 		cfg.Auth,
-		c.Ctx.ClientIP(),
-		c.Ctx.GetHeader("User-Agent"),
+		ctx.ClientIP(),
+		ctx.GetHeader("User-Agent"),
 	)
 	if err != nil {
-		c.redirectWxWorkError(err.Error())
+		redirectWxWorkError(ctx, err.Error())
 		return
 	}
-	c.Ctx.Redirect(http.StatusFound, "/dashboard/login/wxwork/callback?ticket="+url.QueryEscape(ticket)+"&next="+url.QueryEscape(next))
+	ctx.Redirect(http.StatusFound, "/dashboard/login/wxwork/callback?ticket="+url.QueryEscape(ticket)+"&next="+url.QueryEscape(next))
 }
 
-func (c *AuthController) PostWxwork_exchange() *web.JsonResult {
+func WxWorkExchange(ctx *gin.Context) {
 	req := request.WxWorkExchangeRequest{}
-	if err := params.ReadJSON(c.Ctx, &req); err != nil {
-		return web.JsonError(err)
+	if err := params.ReadJSON(ctx, &req); err != nil {
+		httpx.WriteJSON(ctx, err)
+		return
 	}
 	ret, err := services.WxWorkLoginService.ExchangeWxWorkLoginTicket(req.Ticket)
 	if err != nil {
-		return web.JsonError(err)
+		httpx.WriteJSON(ctx, err)
+		return
 	}
-	return web.JsonData(ret)
+	httpx.WriteJSON(ctx, ret)
 }
 
-func (c *AuthController) PostLogout() *web.JsonResult {
-	if err := services.AuthService.Logout(c.Ctx.GetHeader("Authorization")); err != nil {
-		return web.JsonError(err)
+func Logout(ctx *gin.Context) {
+	if err := services.AuthService.Logout(ctx.GetHeader("Authorization")); err != nil {
+		httpx.WriteJSON(ctx, err)
+		return
 	}
-	return web.JsonSuccess()
+	httpx.WriteJSON(ctx, nil)
 }
 
-func (c *AuthController) GetProfile() *web.JsonResult {
-	ret, err := services.AuthService.CurrentProfile(c.Ctx)
+func Profile(ctx *gin.Context) {
+	ret, err := services.AuthService.CurrentProfile(ctx)
 	if err != nil {
-		return web.JsonError(err)
+		httpx.WriteJSON(ctx, err)
+		return
 	}
-	return web.JsonData(ret)
+	httpx.WriteJSON(ctx, ret)
 }
 
-func (c *AuthController) redirectWxWorkError(message string) {
+func redirectWxWorkError(ctx *gin.Context, message string) {
 	if idx := strings.Index(message, ": "); idx >= 0 {
 		message = message[idx+2:]
 	}
-	c.Ctx.Redirect(http.StatusFound, "/login?wxworkError="+url.QueryEscape(message))
+	ctx.Redirect(http.StatusFound, "/login?wxworkError="+url.QueryEscape(message))
 }

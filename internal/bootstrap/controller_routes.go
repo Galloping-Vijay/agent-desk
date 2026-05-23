@@ -7,56 +7,33 @@ import (
 	"cs-agent/internal/controllers/api"
 	"cs-agent/internal/controllers/dashboard"
 	"cs-agent/internal/controllers/third"
+	"cs-agent/internal/pkg/httpx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/mlogclub/simple/web"
 )
 
 func writeJSON(ctx *gin.Context, result *web.JsonResult) {
-	if result == nil {
-		return
-	}
-	ctx.JSON(http.StatusOK, result)
+	httpx.WriteJSON(ctx, result)
 }
 
 func pathInt64(ctx *gin.Context, name string) (int64, bool) {
 	value, err := strconv.ParseInt(ctx.Param(name), 10, 64)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, web.JsonErrorMsg("路径参数错误"))
+		httpx.WriteHttpStatusJSON(ctx, http.StatusBadRequest, web.JsonErrorMsg("路径参数错误"))
 		return 0, false
 	}
 	return value, true
 }
 
 func registerApiAuthRoutes(group *gin.RouterGroup) {
-	group.POST("/login", func(ctx *gin.Context) {
-		controller := &api.AuthController{Ctx: ctx}
-		writeJSON(ctx, controller.PostLogin())
-	})
-	group.POST("/logout", func(ctx *gin.Context) {
-		controller := &api.AuthController{Ctx: ctx}
-		writeJSON(ctx, controller.PostLogout())
-	})
-	group.GET("/profile", func(ctx *gin.Context) {
-		controller := &api.AuthController{Ctx: ctx}
-		writeJSON(ctx, controller.GetProfile())
-	})
-	group.GET("/wxwork_callback", func(ctx *gin.Context) {
-		controller := &api.AuthController{Ctx: ctx}
-		controller.GetWxwork_callback()
-	})
-	group.POST("/wxwork_exchange", func(ctx *gin.Context) {
-		controller := &api.AuthController{Ctx: ctx}
-		writeJSON(ctx, controller.PostWxwork_exchange())
-	})
-	group.GET("/wxwork_login", func(ctx *gin.Context) {
-		controller := &api.AuthController{Ctx: ctx}
-		controller.GetWxwork_login()
-	})
-	group.GET("/wxwork_qr_login", func(ctx *gin.Context) {
-		controller := &api.AuthController{Ctx: ctx}
-		controller.GetWxwork_qr_login()
-	})
+	group.POST("/login", api.Login)
+	group.POST("/logout", api.Logout)
+	group.GET("/profile", api.Profile)
+	group.GET("/wxwork_callback", api.WxWorkCallback)
+	group.POST("/wxwork_exchange", api.WxWorkExchange)
+	group.GET("/wxwork_login", api.WxWorkLogin)
+	group.GET("/wxwork_qr_login", api.WxWorkQRLogin)
 }
 
 func registerApiChannelRoutes(group *gin.RouterGroup) {
