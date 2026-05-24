@@ -36,6 +36,12 @@ import {
 } from "react";
 import { toast } from "sonner";
 
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page";
 import { ListPagination } from "@/components/list-pagination";
 import { OptionCombobox } from "@/components/option-combobox";
 import { Badge } from "@/components/ui/badge";
@@ -449,16 +455,33 @@ export default function DashboardAIAgentsPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-end">
+      <DashboardPage>
+        <DashboardToolbar
+          actions={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => void loadData()}
+                disabled={loading}
+              >
+                <RefreshCwIcon className={loading ? "animate-spin" : ""} />
+                刷新
+              </Button>
+              <Button onClick={openCreateDialog}>
+                <PlusIcon />
+                新建 AI Agent
+              </Button>
+            </>
+          }
+        >
           <Input
             value={nameInput}
             onChange={(event) => setNameInput(event.target.value)}
             onKeyDown={handleFilterKeyDown}
             placeholder="按名称筛选"
-            className="w-full xl:w-56"
+            className="w-full sm:w-56"
           />
-          <div className="w-full xl:w-52">
+          <div className="w-full sm:w-52">
             <OptionCombobox
               value={statusInput}
               options={statusOptions}
@@ -472,21 +495,22 @@ export default function DashboardAIAgentsPage() {
             <SearchIcon />
             查询
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => void loadData()}
-            disabled={loading}
-          >
-            <RefreshCwIcon className={loading ? "animate-spin" : ""} />
-            刷新列表
-          </Button>
-          <Button onClick={openCreateDialog}>
-            <PlusIcon />
-            新建 AI Agent
-          </Button>
-        </div>
+        </DashboardToolbar>
 
-        <div className="rounded-xl border bg-card">
+        <DashboardTableShell
+          pagination={
+            <ListPagination
+              page={result.page.page}
+              limit={result.page.limit}
+              total={result.page.total}
+              onPageChange={(nextPage) => setPage(nextPage)}
+              onLimitChange={(nextLimit) => {
+                setLimit(nextLimit);
+                setPage(1);
+              }}
+            />
+          }
+        >
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -507,15 +531,13 @@ export default function DashboardAIAgentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {result.results.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="py-12 text-center text-muted-foreground"
-                    >
-                      {loading ? "正在加载 AI Agent..." : "暂无 AI Agent"}
-                    </TableCell>
-                  </TableRow>
+                {loading || result.results.length === 0 ? (
+                  <DashboardTableStateRow
+                    colSpan={9}
+                    loading={loading}
+                    loadingText="正在加载 AI Agent..."
+                    emptyText="暂无 AI Agent"
+                  />
                 ) : null}
                 <SortableContext
                   items={result.results.map((item) => item.id)}
@@ -536,20 +558,8 @@ export default function DashboardAIAgentsPage() {
               </TableBody>
             </Table>
           </DndContext>
-          <div className="border-t px-4 py-3">
-            <ListPagination
-              page={result.page.page}
-              limit={result.page.limit}
-              total={result.page.total}
-              onPageChange={(nextPage) => setPage(nextPage)}
-              onLimitChange={(nextLimit) => {
-                setLimit(nextLimit);
-                setPage(1);
-              }}
-            />
-          </div>
-        </div>
-      </div>
+        </DashboardTableShell>
+      </DashboardPage>
 
       <EditDialog
         open={dialogOpen}

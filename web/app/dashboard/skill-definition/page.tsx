@@ -13,6 +13,12 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
 import { ListPagination } from "@/components/list-pagination"
 import { OptionCombobox } from "@/components/option-combobox"
 import { Badge } from "@/components/ui/badge"
@@ -362,9 +368,22 @@ export default function DashboardSkillsPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-end">
-          <div className="relative min-w-72">
+      <DashboardPage>
+        <DashboardToolbar
+          actions={
+            <>
+              <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
+                <RefreshCwIcon className={loading ? "animate-spin" : ""} />
+                刷新
+              </Button>
+              <Button onClick={openCreateDialog}>
+                <PlusIcon />
+                新建
+              </Button>
+            </>
+          }
+        >
+          <div className="relative w-full sm:w-72">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={nameInput}
@@ -379,9 +398,9 @@ export default function DashboardSkillsPage() {
             onChange={(event) => setCodeInput(event.target.value)}
             onKeyDown={handleFilterKeyDown}
             placeholder="按编码筛选"
-            className="w-full xl:w-56"
+            className="w-full sm:w-56"
           />
-          <div className="w-full xl:w-36">
+          <div className="w-full sm:w-36">
             <OptionCombobox
               value={statusFilterInput}
               options={statusFilterOptions}
@@ -395,18 +414,23 @@ export default function DashboardSkillsPage() {
             <SearchIcon />
             查询
           </Button>
-          <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
-            <RefreshCwIcon className={loading ? "animate-spin" : ""} />
-            刷新列表
-          </Button>
-          <Button onClick={openCreateDialog}>
-            <PlusIcon />
-            新建
-          </Button>
-        </div>
+        </DashboardToolbar>
 
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border bg-background">
+        <DashboardTableShell
+          pagination={
+            <ListPagination
+              page={result.page.page}
+              total={result.page.total}
+              limit={limit}
+              loading={loading}
+              onPageChange={handlePageChange}
+              onLimitChange={(nextLimit) => {
+                setLimit(nextLimit)
+                setPage(1)
+              }}
+            />
+          }
+        >
             <Table>
               <TableHeader className="bg-muted/40">
                 <TableRow>
@@ -417,12 +441,13 @@ export default function DashboardSkillsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!loading && result.results.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="py-12 text-center text-muted-foreground">
-                      没有匹配的 Skill
-                    </TableCell>
-                  </TableRow>
+                {loading || result.results.length === 0 ? (
+                  <DashboardTableStateRow
+                    colSpan={4}
+                    loading={loading}
+                    loadingText="正在加载 Skill..."
+                    emptyText="没有匹配的 Skill"
+                  />
                 ) : null}
                 {result.results.map((item) => (
                   <SkillRow
@@ -438,22 +463,8 @@ export default function DashboardSkillsPage() {
                 ))}
               </TableBody>
             </Table>
-            <div className="border-t px-4 py-3">
-              <ListPagination
-                page={result.page.page}
-                total={result.page.total}
-                limit={limit}
-                loading={loading}
-                onPageChange={handlePageChange}
-                onLimitChange={(nextLimit) => {
-                  setLimit(nextLimit)
-                  setPage(1)
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+        </DashboardTableShell>
+      </DashboardPage>
 
       <EditDialog
         open={dialogOpen}

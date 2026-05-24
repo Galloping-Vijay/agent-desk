@@ -5,13 +5,19 @@ import {
   KeyRoundIcon,
   MoreHorizontalIcon,
   PlusIcon,
-  RefreshCwIcon,
   SearchIcon,
   ShieldIcon,
   UserRoundIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
+import { ListPagination } from "@/components/list-pagination"
 import {
   assignUserRoles,
   createUser,
@@ -45,7 +51,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { ListPagination } from "@/components/list-pagination"
 import {
   Table,
   TableBody,
@@ -294,13 +299,16 @@ export default function DashboardUsersPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-          <Button onClick={() => setCreatingOpen(true)} disabled={loading}>
-            <PlusIcon />
-            添加用户
-          </Button>
-          <div className="relative min-w-72">
+      <DashboardPage>
+        <DashboardToolbar
+          actions={
+            <Button onClick={() => setCreatingOpen(true)} disabled={loading}>
+              <PlusIcon />
+              添加用户
+            </Button>
+          }
+        >
+          <div className="relative w-full sm:w-72">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={keywordInput}
@@ -313,9 +321,19 @@ export default function DashboardUsersPage() {
           <Button variant="outline" onClick={applyFilters} disabled={loading}>
             查询
           </Button>
-        </div>
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-2xl border bg-background">
+        </DashboardToolbar>
+        <DashboardTableShell
+          pagination={
+            <ListPagination
+              page={result.page.page}
+              total={result.page.total}
+              limit={result.page.limit}
+              loading={loading}
+              onPageChange={handlePageChange}
+              onLimitChange={handleLimitChange}
+            />
+          }
+        >
             <Table>
               <TableHeader className="bg-muted/40">
                 <TableRow>
@@ -428,26 +446,18 @@ export default function DashboardUsersPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {!loading && result.results.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
-                      没有匹配的用户数据
-                    </TableCell>
-                  </TableRow>
+                {loading || result.results.length === 0 ? (
+                  <DashboardTableStateRow
+                    colSpan={6}
+                    loading={loading}
+                    loadingText="正在加载用户数据..."
+                    emptyText="没有匹配的用户数据"
+                  />
                 ) : null}
               </TableBody>
             </Table>
-          </div>
-          <ListPagination
-            page={result.page.page}
-            total={result.page.total}
-            limit={result.page.limit}
-            loading={loading}
-            onPageChange={handlePageChange}
-            onLimitChange={handleLimitChange}
-          />
-        </div>
-      </div>
+        </DashboardTableShell>
+      </DashboardPage>
       <CreateUserDrawer
         open={creatingOpen}
         saving={savingCreate}

@@ -4,6 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { RefreshCwIcon, SearchIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
 import { ListPagination } from "@/components/list-pagination"
 import { OptionCombobox } from "@/components/option-combobox"
 import { Badge } from "@/components/ui/badge"
@@ -62,21 +67,6 @@ function actionBadgeVariant(action: string) {
       return "secondary" as const
     case "fallback":
       return "outline" as const
-    default:
-      return "secondary" as const
-  }
-}
-
-function hitlBadgeVariant(status: string) {
-  switch (status) {
-    case "pending":
-      return "secondary" as const
-    case "confirmed":
-      return "default" as const
-    case "cancelled":
-      return "outline" as const
-    case "expired":
-      return "destructive" as const
     default:
       return "secondary" as const
   }
@@ -174,8 +164,20 @@ export default function DashboardAgentRunLogsPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,1.6fr)_repeat(5,minmax(0,0.7fr))_auto_auto] xl:items-center">
+      <DashboardPage>
+        <DashboardToolbar
+          actions={
+            <Button
+              variant="outline"
+              onClick={() => void loadData()}
+              disabled={loading}
+              className="w-full xl:w-auto"
+            >
+              <RefreshCwIcon className={loading ? "animate-spin" : ""} />
+              刷新
+            </Button>
+          }
+        >
           <div className="relative min-w-0">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -240,18 +242,23 @@ export default function DashboardAgentRunLogsPage() {
             <SearchIcon />
             查询
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => void loadData()}
-            disabled={loading}
-            className="w-full xl:w-auto"
-          >
-            <RefreshCwIcon className={loading ? "animate-spin" : ""} />
-            刷新列表
-          </Button>
-        </div>
+        </DashboardToolbar>
 
-        <div className="overflow-hidden rounded-lg border bg-background">
+        <DashboardTableShell
+          pagination={
+            <ListPagination
+              page={result.page.page}
+              total={result.page.total}
+              limit={limit}
+              loading={loading}
+              onPageChange={setPage}
+              onLimitChange={(nextLimit) => {
+                setLimit(nextLimit)
+                setPage(1)
+              }}
+            />
+          }
+        >
           {!loading && result.results.length === 0 ? (
             <div className="py-14 text-center text-sm text-muted-foreground">
               暂无 Agent 运行日志
@@ -352,21 +359,8 @@ export default function DashboardAgentRunLogsPage() {
               </div>
             </div>
           )}
-          <div className="border-t px-4 py-3">
-            <ListPagination
-              page={result.page.page}
-              total={result.page.total}
-              limit={limit}
-              loading={loading}
-              onPageChange={setPage}
-              onLimitChange={(nextLimit) => {
-                setLimit(nextLimit)
-                setPage(1)
-              }}
-            />
-          </div>
-        </div>
-      </div>
+        </DashboardTableShell>
+      </DashboardPage>
       <AgentRunLogDetailDialog
         open={detailOpen}
         logId={activeLogId}

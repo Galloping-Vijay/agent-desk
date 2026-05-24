@@ -12,6 +12,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { type CustomerFormSavePayload } from "@/components/customer-form";
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page";
 import { ListPagination } from "@/components/list-pagination";
 import {
   OptionCombobox,
@@ -257,9 +263,16 @@ export default function DashboardCustomersPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-end">
-          <div className="relative min-w-72">
+      <DashboardPage>
+        <DashboardToolbar
+          actions={
+            <Button onClick={openCreateDialog}>
+              <PlusIcon />
+              新建
+            </Button>
+          }
+        >
+          <div className="relative w-full sm:w-72">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={keywordInput}
@@ -320,13 +333,23 @@ export default function DashboardCustomersPage() {
             <SearchIcon />
             查询
           </Button>
-          <Button onClick={openCreateDialog}>
-            <PlusIcon />
-            新建
-          </Button>
-        </div>
+        </DashboardToolbar>
 
-        <div className="overflow-hidden rounded-lg border bg-card">
+        <DashboardTableShell
+          pagination={
+            <ListPagination
+              page={result.page.page}
+              total={result.page.total}
+              limit={result.page.limit}
+              loading={loading}
+              onPageChange={handlePageChange}
+              onLimitChange={(nextLimit) => {
+                setLimit(nextLimit);
+                setPage(1);
+              }}
+            />
+          }
+        >
           <Table>
             <TableHeader>
               <TableRow>
@@ -341,15 +364,13 @@ export default function DashboardCustomersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {result.results.length === 0 && !loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="py-10 text-center text-muted-foreground"
-                  >
-                    暂无客户数据
-                  </TableCell>
-                </TableRow>
+              {loading || result.results.length === 0 ? (
+                <DashboardTableStateRow
+                  colSpan={8}
+                  loading={loading}
+                  loadingText="正在加载客户数据..."
+                  emptyText="暂无客户数据"
+                />
               ) : (
                 result.results.map((item) => {
                   const actionLoading = actionLoadingId === item.id;
@@ -441,20 +462,8 @@ export default function DashboardCustomersPage() {
               )}
             </TableBody>
           </Table>
-        </div>
-
-        <ListPagination
-          page={result.page.page}
-          total={result.page.total}
-          limit={result.page.limit}
-          loading={loading}
-          onPageChange={handlePageChange}
-          onLimitChange={(nextLimit) => {
-            setLimit(nextLimit);
-            setPage(1);
-          }}
-        />
-      </div>
+        </DashboardTableShell>
+      </DashboardPage>
 
       <EditDialog
         open={dialogOpen}

@@ -12,6 +12,11 @@ import {
 import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
 import { toast } from "sonner";
 
+import {
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page";
 import { ListPagination } from "@/components/list-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -247,14 +252,15 @@ export default function DashboardAgentsPage() {
         </div>
         <div className="min-w-0 flex-1 p-4 lg:p-6">
           <div className="flex h-full flex-col gap-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="text-lg font-semibold">
-                  {selectedTeam ? selectedTeam.name : "客服档案"}
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-end">
-                <div className="relative min-w-72">
+            <DashboardToolbar
+              actions={
+                <Button onClick={openCreateDialog}>
+                  <PlusIcon />
+                  新建
+                </Button>
+              }
+            >
+                <div className="relative w-full sm:w-72">
                   <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={displayNameInput}
@@ -271,7 +277,7 @@ export default function DashboardAgentsPage() {
                   onChange={(event) => setAgentCodeInput(event.target.value)}
                   onKeyDown={handleFilterKeyDown}
                   placeholder="按客服工号筛选"
-                  className="w-full xl:w-48"
+                  className="w-full sm:w-44"
                 />
                 <Select
                   value={statusFilterInput}
@@ -279,7 +285,7 @@ export default function DashboardAgentsPage() {
                     setStatusFilterInput(value ?? "all")
                   }
                 >
-                  <SelectTrigger className="w-full xl:w-36">
+                  <SelectTrigger className="w-full sm:w-36">
                     <SelectValue>
                       {serviceStatusOptions.find(
                         (item) => item.value === statusFilterInput,
@@ -302,14 +308,23 @@ export default function DashboardAgentsPage() {
                   <SearchIcon />
                   查询
                 </Button>
-                <Button onClick={openCreateDialog}>
-                  <PlusIcon />
-                  新建
-                </Button>
-              </div>
-            </div>
-            <div className="min-h-0 space-y-4">
-              <div className="overflow-hidden rounded-2xl border bg-background">
+            </DashboardToolbar>
+            <DashboardTableShell
+              className="min-h-0"
+              pagination={
+                <ListPagination
+                  page={result.page.page}
+                  total={result.page.total}
+                  limit={limit}
+                  loading={loading}
+                  onPageChange={handlePageChange}
+                  onLimitChange={(nextLimit) => {
+                    setLimit(nextLimit);
+                    setPage(1);
+                  }}
+                />
+              }
+            >
                 <Table>
                   <TableHeader className="bg-muted/40">
                     <TableRow>
@@ -431,33 +446,21 @@ export default function DashboardAgentsPage() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {!loading && result.results.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className="py-12 text-center text-muted-foreground"
-                        >
-                          {selectedTeam
+                    {loading || result.results.length === 0 ? (
+                      <DashboardTableStateRow
+                        colSpan={5}
+                        loading={loading}
+                        loadingText="正在加载客服档案..."
+                        emptyText={
+                          selectedTeam
                             ? "当前客服组下没有匹配的客服档案"
-                            : "没有匹配的客服档案"}
-                        </TableCell>
-                      </TableRow>
+                            : "没有匹配的客服档案"
+                        }
+                      />
                     ) : null}
                   </TableBody>
                 </Table>
-              </div>
-              <ListPagination
-                page={result.page.page}
-                total={result.page.total}
-                limit={limit}
-                loading={loading}
-                onPageChange={handlePageChange}
-                onLimitChange={(nextLimit) => {
-                  setLimit(nextLimit);
-                  setPage(1);
-                }}
-              />
-            </div>
+            </DashboardTableShell>
           </div>
         </div>
       </div>

@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation"
 import { BellIcon, CheckCheckIcon, RefreshCwIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
 import { ListPagination } from "@/components/list-pagination"
 import { useNotifications } from "@/components/notification-provider"
 import { Badge } from "@/components/ui/badge"
@@ -104,15 +109,10 @@ export default function DashboardNotificationsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">通知中心</h1>
-          <p className="text-sm text-muted-foreground">
-            查看工单、会话等业务流转提醒
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+    <DashboardPage>
+      <DashboardToolbar
+        actions={
+          <>
           <Button variant="outline" onClick={() => void loadData()} disabled={loading}>
             <RefreshCwIcon className={cn(loading && "animate-spin")} />
             刷新
@@ -125,10 +125,9 @@ export default function DashboardNotificationsPage() {
             <CheckCheckIcon />
             全部已读
           </Button>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
+          </>
+        }
+      >
         {readStatusOptions.map((option) => (
           <Button
             key={option.value}
@@ -138,9 +137,20 @@ export default function DashboardNotificationsPage() {
             {option.label}
           </Button>
         ))}
-      </div>
+      </DashboardToolbar>
 
-      <div className="overflow-hidden rounded-lg border bg-background">
+      <DashboardTableShell
+        pagination={
+          <ListPagination
+            page={result.page.page}
+            limit={result.page.limit}
+            total={result.page.total}
+            loading={loading}
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
+          />
+        }
+      >
         {result.results.length > 0 ? (
           <div className="divide-y">
             {result.results.map((item) => {
@@ -172,16 +182,7 @@ export default function DashboardNotificationsPage() {
             {loading ? "正在加载通知" : "暂无通知"}
           </div>
         )}
-      </div>
-
-      <ListPagination
-        page={result.page.page}
-        limit={result.page.limit}
-        total={result.page.total}
-        loading={loading}
-        onPageChange={handlePageChange}
-        onLimitChange={handleLimitChange}
-      />
-    </div>
+      </DashboardTableShell>
+    </DashboardPage>
   )
 }

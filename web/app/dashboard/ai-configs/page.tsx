@@ -29,6 +29,12 @@ import {
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { toast } from "sonner";
 
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page";
 import { ListPagination } from "@/components/list-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -498,9 +504,26 @@ export default function DashboardAIConfigsPage() {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-end">
-          <div className="relative min-w-72">
+      <DashboardPage>
+        <DashboardToolbar
+          actions={
+            <>
+              <Button
+                variant="outline"
+                onClick={() => void loadData()}
+                disabled={loading}
+              >
+                <RefreshCwIcon className={loading ? "animate-spin" : ""} />
+                刷新
+              </Button>
+              <Button onClick={openCreateDialog}>
+                <PlusIcon />
+                新建
+              </Button>
+            </>
+          }
+        >
+          <div className="relative w-full sm:w-72">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={keywordInput}
@@ -510,7 +533,7 @@ export default function DashboardAIConfigsPage() {
               className="pl-9"
             />
           </div>
-          <div className="w-full xl:w-40">
+          <div className="w-full sm:w-40">
             <OptionCombobox
               value={modelTypeFilterInput}
               options={modelTypeFilterOptions}
@@ -520,7 +543,7 @@ export default function DashboardAIConfigsPage() {
               onChange={setModelTypeFilterInput}
             />
           </div>
-          <div className="w-full xl:w-40">
+          <div className="w-full sm:w-40">
             <OptionCombobox
               value={providerFilterInput}
               options={providerFilterOptions}
@@ -530,7 +553,7 @@ export default function DashboardAIConfigsPage() {
               onChange={setProviderFilterInput}
             />
           </div>
-          <div className="w-full xl:w-32">
+          <div className="w-full sm:w-32">
             <OptionCombobox
               value={statusFilterInput}
               options={listStatusOptions}
@@ -544,21 +567,19 @@ export default function DashboardAIConfigsPage() {
             <SearchIcon />
             查询
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => void loadData()}
-            disabled={loading}
-          >
-            <RefreshCwIcon className={loading ? "animate-spin" : ""} />
-            刷新列表
-          </Button>
-          <Button onClick={openCreateDialog}>
-            <PlusIcon />
-            新建
-          </Button>
-        </div>
+        </DashboardToolbar>
 
-        <div className="rounded-2xl border bg-card">
+        <DashboardTableShell
+          pagination={
+            <ListPagination
+              page={result.page.page}
+              limit={result.page.limit}
+              total={result.page.total}
+              onPageChange={handlePageChange}
+              onLimitChange={handleLimitChange}
+            />
+          }
+        >
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -578,24 +599,13 @@ export default function DashboardAIConfigsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="py-10 text-center text-muted-foreground"
-                    >
-                      正在加载 AI 配置...
-                    </TableCell>
-                  </TableRow>
-                ) : result.results.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="py-10 text-center text-muted-foreground"
-                    >
-                      暂无 AI 配置数据
-                    </TableCell>
-                  </TableRow>
+                {loading || result.results.length === 0 ? (
+                  <DashboardTableStateRow
+                    colSpan={8}
+                    loading={loading}
+                    loadingText="正在加载 AI 配置..."
+                    emptyText="暂无 AI 配置数据"
+                  />
                 ) : (
                   <SortableContext
                     items={result.results.map((item) => item.id)}
@@ -617,16 +627,8 @@ export default function DashboardAIConfigsPage() {
               </TableBody>
             </Table>
           </DndContext>
-        </div>
-
-        <ListPagination
-          page={result.page.page}
-          limit={result.page.limit}
-          total={result.page.total}
-          onPageChange={handlePageChange}
-          onLimitChange={handleLimitChange}
-        />
-      </div>
+        </DashboardTableShell>
+      </DashboardPage>
 
       <EditDialog
         open={dialogOpen}

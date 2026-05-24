@@ -17,32 +17,6 @@ export function DashboardPage({
   )
 }
 
-export function DashboardPageHeader({
-  title,
-  description,
-  actions,
-}: {
-  title: string
-  description?: ReactNode
-  actions?: ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-start lg:justify-between">
-      <div className="min-w-0 space-y-1">
-        <h1 className="truncate text-xl font-semibold tracking-tight">{title}</h1>
-        {description ? (
-          <div className="text-sm leading-6 text-muted-foreground">
-            {description}
-          </div>
-        ) : null}
-      </div>
-      {actions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
-      ) : null}
-    </div>
-  )
-}
-
 export function DashboardToolbar({
   className,
   actions,

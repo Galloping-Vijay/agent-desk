@@ -5,6 +5,12 @@ import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
+import {
+  DashboardPage,
+  DashboardTableShell,
+  DashboardTableStateRow,
+  DashboardToolbar,
+} from "@/components/dashboard-page"
 import { OptionCombobox, type ComboboxOption } from "@/components/option-combobox"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -244,48 +250,47 @@ export default function TicketsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="">
-          <div className="flex flex-wrap gap-2">
-            {quickViews.map((view) => (
-              <button
-                key={view.key}
-                type="button"
-                className={cn(
-                  "inline-flex min-w-0 items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition",
-                  quickView === view.key
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-background hover:bg-muted",
-                )}
-                onClick={() => setQuickView(view.key)}
-              >
-                <span className="truncate font-medium">{view.label}</span>
-                <span
-                  className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
-                    quickView === view.key ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {view.count}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" onClick={() => void loadData()} disabled={loading}>
-            <RefreshCcwIcon className={cn("size-4", loading ? "animate-spin" : "")} />
-            刷新
-          </Button>
-          <Button type="button" onClick={() => setCreateOpen(true)}>
-            <PlusIcon className="size-4" />
-            新建工单
-          </Button>
-        </div>
+    <DashboardPage>
+      <div className="flex flex-wrap gap-2">
+        {quickViews.map((view) => (
+          <button
+            key={view.key}
+            type="button"
+            className={cn(
+              "inline-flex min-w-0 items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition",
+              quickView === view.key
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-background hover:bg-muted",
+            )}
+            onClick={() => setQuickView(view.key)}
+          >
+            <span className="truncate font-medium">{view.label}</span>
+            <span
+              className={cn(
+                "rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+                quickView === view.key ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground",
+              )}
+            >
+              {view.count}
+            </span>
+          </button>
+        ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <DashboardToolbar
+        actions={
+          <>
+            <Button type="button" variant="outline" onClick={() => void loadData()} disabled={loading}>
+              <RefreshCcwIcon className={cn("size-4", loading ? "animate-spin" : "")} />
+              刷新
+            </Button>
+            <Button type="button" onClick={() => setCreateOpen(true)}>
+              <PlusIcon className="size-4" />
+              新建工单
+            </Button>
+          </>
+        }
+      >
         <Input
           className="w-full sm:w-72"
           placeholder="搜索编号、标题或描述"
@@ -333,9 +338,9 @@ export default function TicketsPage() {
           <SearchIcon className="size-4" />
           查询
         </Button>
-      </div>
+      </DashboardToolbar>
 
-      <div className="overflow-hidden rounded-lg border border-border">
+      <DashboardTableShell>
         <Table>
           <TableHeader>
             <TableRow>
@@ -348,11 +353,12 @@ export default function TicketsPage() {
           </TableHeader>
           <TableBody>
             {tickets.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">
-                  {loading ? "加载中..." : "暂无工单"}
-                </TableCell>
-              </TableRow>
+              <DashboardTableStateRow
+                colSpan={5}
+                loading={loading}
+                loadingText="正在加载工单..."
+                emptyText="暂无工单"
+              />
             ) : (
               tickets.map((ticket) => (
                 <TableRow key={ticket.id}>
@@ -408,7 +414,7 @@ export default function TicketsPage() {
             )}
           </TableBody>
         </Table>
-      </div>
+      </DashboardTableShell>
 
       <EditDialog
         open={createOpen}
@@ -428,6 +434,6 @@ export default function TicketsPage() {
         }}
         onChanged={loadData}
       />
-    </div>
+    </DashboardPage>
   )
 }
