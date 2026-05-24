@@ -17,6 +17,7 @@ type Config struct {
 	VectorDB        VectorDBConfig        `yaml:"vectorDB"`
 	MCP             MCPConfig             `yaml:"mcp"`
 	WxWork          WxWorkConfig          `yaml:"wxWork"`
+	OIDC            OIDCConfig            `yaml:"oidc"`
 	CustomerSession CustomerSessionConfig `yaml:"customerSession"`
 }
 
@@ -133,6 +134,16 @@ type MCPServerConfig struct {
 	Endpoint  string            `yaml:"endpoint"`
 	TimeoutMS int               `yaml:"timeoutMs"`
 	Headers   map[string]string `yaml:"headers"`
+}
+
+type OIDCConfig struct {
+	Enabled      bool     `yaml:"enabled"`
+	Issuer       string   `yaml:"issuer"`
+	ClientID     string   `yaml:"clientId"`
+	ClientSecret string   `yaml:"clientSecret"`
+	RedirectURL  string   `yaml:"redirectUrl"`
+	StateSecret  string   `yaml:"stateSecret"`
+	Scopes       []string `yaml:"scopes"`
 }
 
 // WxWorkConfig 定义企业微信接入配置。

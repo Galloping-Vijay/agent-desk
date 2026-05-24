@@ -58,6 +58,22 @@ mcp:
       timeoutMs: 15000
       headers: {}
 
+oidc:
+  # 是否启用 OIDC 登录；本系统作为 OIDC Client。
+  enabled: false
+  # OIDC Provider issuer，例如 https://idp.example.com/realms/demo。
+  issuer: ""
+  clientId: ""
+  clientSecret: ""
+  # 必须与 OIDC Provider 后台登记的 redirect_uri 完全一致。
+  redirectUrl: "http://127.0.0.1:8083/api/auth/oidc_callback"
+  # OIDC 登录 state 签名密钥；留空时退回使用 clientSecret。
+  stateSecret: ""
+  scopes:
+    - openid
+    - profile
+    - email
+
 wxWork:
   # 是否启用企业微信能力。
   # false 时不会初始化企业微信 SDK，登录、客服回调、应用通知都不可用。

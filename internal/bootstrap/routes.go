@@ -16,6 +16,9 @@ func registerApiAuthRoutes(group *gin.RouterGroup) {
 	group.POST("/wxwork_exchange", api.WxWorkExchange)
 	group.GET("/wxwork_login", api.WxWorkLogin)
 	group.GET("/wxwork_qr_login", api.WxWorkQRLogin)
+	group.GET("/oidc_callback", api.OIDCCallback)
+	group.POST("/oidc_exchange", api.OIDCExchange)
+	group.GET("/oidc_login", api.OIDCLogin)
 }
 
 func registerApiChannelRoutes(group *gin.RouterGroup) {

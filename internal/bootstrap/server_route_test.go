@@ -31,6 +31,9 @@ func TestNewServerRegistersGinRoutes(t *testing.T) {
 
 	expected := []string{
 		http.MethodPost + " /api/auth/login",
+		http.MethodGet + " /api/auth/oidc_login",
+		http.MethodGet + " /api/auth/oidc_callback",
+		http.MethodPost + " /api/auth/oidc_exchange",
 		http.MethodGet + " /api/auth/profile",
 		http.MethodGet + " /api/dashboard/user/list",
 		http.MethodGet + " /api/dashboard/user/:id",

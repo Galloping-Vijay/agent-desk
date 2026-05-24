@@ -8,3 +8,7 @@ type LoginRequest struct {
 type WxWorkExchangeRequest struct {
 	Ticket string `json:"ticket"`
 }
+
+type OIDCExchangeRequest struct {
+	Ticket string `json:"ticket"`
+}

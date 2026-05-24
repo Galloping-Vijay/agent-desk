@@ -139,6 +139,7 @@ func (s *wxWorkLoginService) createWxWorkUser(ctx *sqls.TxContext, profile *wxwo
 	username := strings.TrimSpace(profile.UserID)
 	mobile := strings.TrimSpace(profile.Mobile)
 	email := strings.TrimSpace(s.firstNonEmpty(profile.Email, profile.BizMail))
+	now := time.Now()
 
 	if err := s.checkWxWorkProfile(ctx.Tx, username, mobile, email); err != nil {
 		return nil, nil, err
@@ -152,10 +153,10 @@ func (s *wxWorkLoginService) createWxWorkUser(ctx *sqls.TxContext, profile *wxwo
 		PasswordSalt: "",
 		Status:       enums.StatusOk,
 		AuditFields: models.AuditFields{
-			CreatedAt:      time.Now(),
+			CreatedAt:      now,
 			CreateUserID:   0,
 			CreateUserName: enums.GetThirdProviderLabel(enums.ThirdProviderWxWork),
-			UpdatedAt:      time.Now(),
+			UpdatedAt:      now,
 			UpdateUserID:   0,
 			UpdateUserName: enums.GetThirdProviderLabel(enums.ThirdProviderWxWork),
 		},
@@ -172,12 +173,12 @@ func (s *wxWorkLoginService) createWxWorkUser(ctx *sqls.TxContext, profile *wxwo
 		ProviderName:   enums.GetThirdProviderLabel(enums.ThirdProviderWxWork),
 		RawProfile:     jsons.ToJsonStr(profile),
 		Status:         enums.StatusOk,
-		LastAuthAt:     new(time.Now()),
+		LastAuthAt:     &now,
 		AuditFields: models.AuditFields{
-			CreatedAt:      time.Now(),
+			CreatedAt:      now,
 			CreateUserID:   user.ID,
 			CreateUserName: user.Username,
-			UpdatedAt:      time.Now(),
+			UpdatedAt:      now,
 			UpdateUserID:   user.ID,
 			UpdateUserName: user.Username,
 		},

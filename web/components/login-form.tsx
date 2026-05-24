@@ -15,6 +15,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { KeyRoundIcon } from "lucide-react"
 
 function detectWxWorkEnvironment() {
   if (typeof navigator === "undefined") {
@@ -35,6 +36,7 @@ export function LoginForm({
   const [isWxWorkEnv, setIsWxWorkEnv] = useState(false)
   const nextPath = searchParams.get("next")
   const wxworkError = searchParams.get("wxworkError")
+  const oidcError = searchParams.get("oidcError")
   const redirectPath =
     nextPath && nextPath.startsWith("/") ? nextPath : "/dashboard"
 
@@ -49,6 +51,12 @@ export function LoginForm({
       toast.error(wxworkError)
     }
   }, [wxworkError])
+
+  useEffect(() => {
+    if (oidcError) {
+      toast.error(oidcError)
+    }
+  }, [oidcError])
 
   useEffect(() => {
     setIsWxWorkEnv(detectWxWorkEnvironment())
@@ -128,6 +136,19 @@ export function LoginForm({
           >
             <Image src="/images/wxwork.svg" alt="" width={16} height={16} className="size-4 shrink-0" />
             企业微信登录
+          </Button>
+        </Field>
+        <Field>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              window.location.href = `/api/auth/oidc_login?next=${encodeURIComponent(redirectPath)}`
+            }}
+          >
+            <KeyRoundIcon className="size-4 shrink-0" />
+            OIDC 登录
           </Button>
         </Field>
       </FieldGroup>

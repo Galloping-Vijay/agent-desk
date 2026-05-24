@@ -1,7 +1,9 @@
 package bootstrap
 
 import (
+	"context"
 	"cs-agent/internal/ai/rag/vectordb"
+	"cs-agent/internal/oidcclient"
 	"cs-agent/internal/pkg/config"
 	"cs-agent/internal/pkg/logx"
 	"cs-agent/internal/services/cronx"
@@ -42,5 +44,9 @@ func Init(configPath string) error {
 	cronx.Init()
 
 	wxwork.Init()
+	if err := oidcclient.Init(context.Background()); err != nil {
+		slog.Error("init oidc failed", "error", err)
+		return err
+	}
 	return nil
 }

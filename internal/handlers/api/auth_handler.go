@@ -77,6 +77,46 @@ func WxWorkExchange(ctx *gin.Context) {
 	httpx.WriteJSON(ctx, ret)
 }
 
+func OIDCLogin(ctx *gin.Context) {
+	loginURL, err := services.OIDCLoginService.BuildOIDCLoginURL(ctx.Query("next"))
+	if err != nil {
+		ctx.Redirect(http.StatusFound, "/dashboard/login?oidcError="+url.QueryEscape(loginErrorMessage(err.Error())))
+		return
+	}
+	ctx.Redirect(http.StatusFound, loginURL)
+}
+
+func OIDCCallback(ctx *gin.Context) {
+	cfg := config.Current()
+	ticket, next, err := services.OIDCLoginService.LoginByOIDC(
+		ctx.Request.Context(),
+		ctx.Query("code"),
+		ctx.Query("state"),
+		cfg.Auth,
+		ctx.ClientIP(),
+		ctx.GetHeader("User-Agent"),
+	)
+	if err != nil {
+		ctx.Redirect(http.StatusFound, "/dashboard/login?oidcError="+url.QueryEscape(loginErrorMessage(err.Error())))
+		return
+	}
+	ctx.Redirect(http.StatusFound, "/dashboard/login/oidc/callback?ticket="+url.QueryEscape(ticket)+"&next="+url.QueryEscape(next))
+}
+
+func OIDCExchange(ctx *gin.Context) {
+	req := request.OIDCExchangeRequest{}
+	if err := params.ReadJSON(ctx, &req); err != nil {
+		httpx.WriteJSON(ctx, err)
+		return
+	}
+	ret, err := services.OIDCLoginService.ExchangeOIDCLoginTicket(req.Ticket)
+	if err != nil {
+		httpx.WriteJSON(ctx, err)
+		return
+	}
+	httpx.WriteJSON(ctx, ret)
+}
+
 func Logout(ctx *gin.Context) {
 	if err := services.AuthService.Logout(ctx.GetHeader("Authorization")); err != nil {
 		httpx.WriteJSON(ctx, err)
@@ -95,6 +135,10 @@ func Profile(ctx *gin.Context) {
 }
 
 func wxWorkErrorMessage(message string) string {
+	return loginErrorMessage(message)
+}
+
+func loginErrorMessage(message string) string {
 	if idx := strings.Index(message, ": "); idx >= 0 {
 		message = message[idx+2:]
 	}

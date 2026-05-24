@@ -63,13 +63,15 @@ type ThirdProvider string
 const (
 	ThirdProviderWxWork   ThirdProvider = "wxwork"
 	ThirdProviderDingtalk ThirdProvider = "dingtalk"
+	ThirdProviderOIDC     ThirdProvider = "oidc"
 )
 
-var ThirdProviderValues = []ThirdProvider{ThirdProviderWxWork, ThirdProviderDingtalk}
+var ThirdProviderValues = []ThirdProvider{ThirdProviderWxWork, ThirdProviderDingtalk, ThirdProviderOIDC}
 
 var thirdProviderLabelMap = map[ThirdProvider]string{
 	ThirdProviderWxWork:   "企业微信",
 	ThirdProviderDingtalk: "钉钉",
+	ThirdProviderOIDC:     "OIDC",
 }
 
 func GetThirdProviderLabel(provider ThirdProvider) string {
