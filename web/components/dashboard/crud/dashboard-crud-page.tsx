@@ -144,7 +144,7 @@ export type DashboardCrudPageProps<TItem, TPayload> = {
   updateItem: (item: TItem, payload: TPayload) => Promise<unknown>
   deleteItem?: (item: TItem) => Promise<unknown>
   canDelete?: (item: TItem) => boolean
-  deleteConfirm?: ConfirmOptions | ((item: TItem) => ConfirmOptions)
+  deleteConfirm?: false | ConfirmOptions | ((item: TItem) => ConfirmOptions)
   rowActions?: DashboardCrudRowAction<TItem>[]
   renderRowActions?: (context: DashboardCrudRowActionContext<TItem>) => ReactNode
   sort?: {
@@ -270,9 +270,15 @@ export function DashboardCrudPage<TItem, TPayload>({
 
   async function handleDelete(item: TItem) {
     if (!deleteItem) return
-    if (deleteConfirm) {
+    if (deleteConfirm !== false) {
       const confirmed = await confirm(
-        typeof deleteConfirm === "function" ? deleteConfirm(item) : deleteConfirm
+        typeof deleteConfirm === "function"
+          ? deleteConfirm(item)
+          : {
+              confirmText: labels.delete,
+              variant: "destructive",
+              ...deleteConfirm,
+            }
       )
       if (!confirmed) return
     }
