@@ -4,12 +4,12 @@ import { SignJWT } from "jose"
 import { CheckIcon, CopyIcon } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
-import type { CSAgentConfig } from "@/lib/sdk/config-types"
+import type { AgentDeskConfig } from "@/lib/sdk/config-types"
 import { useI18n } from "@/i18n/provider"
 
 const STORAGE_KEY = "agent-desk-web-widget-test-config"
 const DEFAULT_JWT_TTL_MINUTES = "30"
-const INITIAL_CONFIG: CSAgentConfig = {
+const INITIAL_CONFIG: AgentDeskConfig = {
   channelId: "",
   baseUrl: "",
   apiBaseUrl: "",
@@ -17,7 +17,7 @@ const INITIAL_CONFIG: CSAgentConfig = {
 
 type AuthMode = "guest" | "jwt"
 
-type WidgetDemoConfig = CSAgentConfig & {
+type WidgetDemoConfig = AgentDeskConfig & {
   authMode?: AuthMode
   jwtSecret?: string
   jwtUserId?: string
@@ -53,32 +53,32 @@ function removeMountedWidget() {
     return
   }
 
-  window.CSAgentWidget?.destroy()
+  window.AgentDeskWidget?.destroy()
   document
     .querySelectorAll(
       '[data-agent-desk-widget="launcher"], [data-agent-desk-widget="frame"], [data-agent-desk-widget="script"]'
     )
     .forEach((node) => node.remove())
 
-  delete window.CSAgentConfig
+  delete window.AgentDeskConfig
   delete window.__CS_AI_AGENT_WIDGET_CONFIG__
   delete window.__CS_AI_AGENT_WIDGET_STATE__
-  delete window.CSAgentWidget
+  delete window.AgentDeskWidget
 }
 
-function injectWidget(config: CSAgentConfig) {
+function injectWidget(config: AgentDeskConfig) {
   removeMountedWidget()
-  window.CSAgentConfig = config
+  window.AgentDeskConfig = config
 
   const script = document.createElement("script")
   script.async = true
   script.src = `${window.location.origin}/sdk/agent-desk-sdk.min.js`
-  script.dataset.csAgentWidget = "script"
+  script.dataset.agentDeskWidget = "script"
   document.body.appendChild(script)
 }
 
-function buildWidgetConfig(config: WidgetDemoConfig): CSAgentConfig {
-  const nextConfig: CSAgentConfig = {
+function buildWidgetConfig(config: WidgetDemoConfig): AgentDeskConfig {
+  const nextConfig: AgentDeskConfig = {
     channelId: config.channelId.trim(),
     baseUrl: "",
     apiBaseUrl: "",
@@ -200,7 +200,7 @@ export function SupportWidgetDemo() {
     }
 
     return `<script>
-  window.CSAgentConfig = {
+  window.AgentDeskConfig = {
 ${configLines.join(",\n")}
   };
 </script>
@@ -225,11 +225,11 @@ ${configLines.join(",\n")}
   }
 
   async function handleCopyDirectUrl() {
-    if (!window.CSAgentWidget || typeof navigator === "undefined") {
+    if (!window.AgentDeskWidget || typeof navigator === "undefined") {
       return
     }
     try {
-      const url = await window.CSAgentWidget.getChatUrl()
+      const url = await window.AgentDeskWidget.getChatUrl()
       setLatestDirectChatUrl(url)
       if (config.authMode === "jwt") {
         setGeneratedToken(new URL(url).searchParams.get("userToken") || "")
@@ -243,11 +243,11 @@ ${configLines.join(",\n")}
   }
 
   async function handleOpenDirectChat() {
-    if (!window.CSAgentWidget) {
+    if (!window.AgentDeskWidget) {
       return
     }
     try {
-      const url = await window.CSAgentWidget.getChatUrl()
+      const url = await window.AgentDeskWidget.getChatUrl()
       setLatestDirectChatUrl(url)
       if (config.authMode === "jwt") {
         setGeneratedToken(new URL(url).searchParams.get("userToken") || "")

@@ -68,7 +68,7 @@ async function loadSdk(config) {
       createElementNS: (_namespace, tagName) => createElement(tagName),
     },
     window: {
-      CSAgentConfig: config,
+      AgentDeskConfig: config,
       location: {
         origin: "https://host.example",
       },
@@ -109,10 +109,10 @@ test("getChatUrl resolves a fresh userToken for each call", async () => {
     getUserToken: async () => `token_${++calls}`,
   })
 
-  assert.equal(typeof sandbox.window.CSAgentWidget.getChatUrl, "function")
+  assert.equal(typeof sandbox.window.AgentDeskWidget.getChatUrl, "function")
 
-  const first = await sandbox.window.CSAgentWidget.getChatUrl()
-  const second = await sandbox.window.CSAgentWidget.getChatUrl()
+  const first = await sandbox.window.AgentDeskWidget.getChatUrl()
+  const second = await sandbox.window.AgentDeskWidget.getChatUrl()
 
   assert.equal(new URL(first).pathname, "/support/chat/")
   assert.equal(new URL(second).pathname, "/support/chat/")
@@ -129,7 +129,7 @@ test("launcher click creates chat iframe with a freshly resolved userToken", asy
   })
   await flushPromises()
   const launcher = sandbox.document.body.children.find(
-    (child) => child.dataset.csAgentWidget === "launcher"
+    (child) => child.dataset.agentDeskWidget === "launcher"
   )
 
   assert.ok(launcher)
@@ -138,7 +138,7 @@ test("launcher click creates chat iframe with a freshly resolved userToken", asy
   await flushPromises()
 
   const frame = sandbox.document.body.children.find(
-    (child) => child.dataset.csAgentWidget === "frame"
+    (child) => child.dataset.agentDeskWidget === "frame"
   )
 
   assert.ok(frame)
@@ -153,14 +153,14 @@ test("chat iframe layout uses dynamic viewport height for iOS browser chrome", a
   })
   await flushPromises()
   const launcher = sandbox.document.body.children.find(
-    (child) => child.dataset.csAgentWidget === "launcher"
+    (child) => child.dataset.agentDeskWidget === "launcher"
   )
 
   launcher.click()
   await flushPromises()
 
   const frame = sandbox.document.body.children.find(
-    (child) => child.dataset.csAgentWidget === "frame"
+    (child) => child.dataset.agentDeskWidget === "frame"
   )
 
   assert.ok(frame)

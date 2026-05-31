@@ -1,10 +1,10 @@
 import type {
-  CSAgentConfig,
-  CSAgentWidget,
+  AgentDeskConfig,
+  AgentDeskWidget,
   SupportChatRuntimeConfig,
 } from "./config-types"
 
-type NormalizedCSAgentConfig = CSAgentConfig & {
+type NormalizedAgentDeskConfig = AgentDeskConfig & {
   baseUrl: string
   channelId: string
   position: "left" | "right"
@@ -23,7 +23,7 @@ type WidgetState = {
   configLoading: boolean
   frameHideTimer: number | null
   frameDestroyTimer: number | null
-  config: NormalizedCSAgentConfig | null
+  config: NormalizedAgentDeskConfig | null
   frameConfig: SupportChatRuntimeConfig | null
   frameUrl: URL | null
   animationDuration: number
@@ -33,7 +33,7 @@ type WidgetState = {
 type WidgetConfigResponse = {
   success?: boolean
   data?: Partial<Pick<
-    CSAgentConfig,
+    AgentDeskConfig,
     "title" | "subtitle" | "themeColor" | "position" | "width"
   >>
 }
@@ -64,7 +64,7 @@ type FrameMessage =
 
 (function () {
   const DEFAULT_CONFIG: Pick<
-    NormalizedCSAgentConfig,
+    NormalizedAgentDeskConfig,
     "position" | "themeColor" | "width"
   > = {
     position: "right",
@@ -94,7 +94,7 @@ type FrameMessage =
     window.__CS_AI_AGENT_WIDGET_STATE__ = state
   }
 
-  function normalizeConfig(config?: CSAgentConfig): NormalizedCSAgentConfig {
+  function normalizeConfig(config?: AgentDeskConfig): NormalizedAgentDeskConfig {
     const merged: Record<string, unknown> = { ...DEFAULT_CONFIG, ...(config || {}) }
     merged.baseUrl = String(merged.baseUrl || window.location.origin).replace(/\/$/, "")
     if (merged.apiBaseUrl) {
@@ -109,10 +109,10 @@ type FrameMessage =
     if (typeof merged.getUserToken !== "function") {
       delete merged.getUserToken
     }
-    return merged as NormalizedCSAgentConfig
+    return merged as NormalizedAgentDeskConfig
   }
 
-  function resolveWidgetBaseUrl(config: NormalizedCSAgentConfig) {
+  function resolveWidgetBaseUrl(config: NormalizedAgentDeskConfig) {
     const currentScript = document.currentScript as HTMLScriptElement | null
     if (currentScript?.src) {
       return currentScript.src.replace(/\/sdk\/agent-desk-sdk\.min\.js(?:\?.*)?$/, "")
@@ -120,7 +120,7 @@ type FrameMessage =
     return String(config.widgetBaseUrl || config.baseUrl || window.location.origin).replace(/\/$/, "")
   }
 
-  function createFrameUrl(config: NormalizedCSAgentConfig, userToken: string) {
+  function createFrameUrl(config: NormalizedAgentDeskConfig, userToken: string) {
     const widgetBaseUrl = resolveWidgetBaseUrl(config)
     const frameUrl = new URL(`${widgetBaseUrl}/support/chat/`)
     frameUrl.searchParams.set("channelId", config.channelId)
@@ -133,7 +133,7 @@ type FrameMessage =
   }
 
   function createFrameConfig(
-    config: NormalizedCSAgentConfig,
+    config: NormalizedAgentDeskConfig,
     userToken: string
   ): SupportChatRuntimeConfig {
     const { getUserToken: _getUserToken, ...payload } = config
@@ -169,13 +169,13 @@ type FrameMessage =
   }
 
   function mergeWidgetConfig(
-    config: NormalizedCSAgentConfig,
+    config: NormalizedAgentDeskConfig,
     remoteConfig?: WidgetConfigResponse["data"]
   ) {
     if (!remoteConfig) {
       return config
     }
-    const merged: NormalizedCSAgentConfig = { ...config }
+    const merged: NormalizedAgentDeskConfig = { ...config }
     const remoteKeys = ["title", "subtitle", "themeColor", "position", "width"] as const
     remoteKeys.forEach((key) => {
       const value = remoteConfig[key]
@@ -186,7 +186,7 @@ type FrameMessage =
     return merged
   }
 
-  function fetchWidgetConfig(config: NormalizedCSAgentConfig) {
+  function fetchWidgetConfig(config: NormalizedAgentDeskConfig) {
     const baseUrl = String(config.apiBaseUrl || config.baseUrl || "").replace(/\/$/, "")
     if (!baseUrl || !config.channelId || typeof fetch !== "function") {
       return Promise.resolve(config)
@@ -368,7 +368,7 @@ type FrameMessage =
     }
 
     state.frame = document.createElement("iframe")
-    state.frame.dataset.csAgentWidget = "frame"
+    state.frame.dataset.agentDeskWidget = "frame"
     state.frame.title = state.config.title || getDefaultWidgetTitle()
     state.frame.src = state.frameUrl.toString()
     applyFrameLayout()
@@ -434,7 +434,7 @@ type FrameMessage =
     ]
     const text = document.createElement("span")
     button.type = "button"
-    button.dataset.csAgentWidget = "launcher"
+    button.dataset.agentDeskWidget = "launcher"
     button.setAttribute("aria-label", config.title || getDefaultWidgetTitle())
     icon.setAttribute("viewBox", "0 0 24 24")
     icon.setAttribute("fill", "none")
@@ -491,8 +491,8 @@ type FrameMessage =
     return button
   }
 
-  function mount(config?: CSAgentConfig) {
-    const rawConfig = config || window.CSAgentConfig || { channelId: "" }
+  function mount(config?: AgentDeskConfig) {
+    const rawConfig = config || window.AgentDeskConfig || { channelId: "" }
     state.config = normalizeConfig(rawConfig)
     const widgetBaseUrl = resolveWidgetBaseUrl(state.config)
     if (!rawConfig.baseUrl) {
@@ -552,7 +552,7 @@ type FrameMessage =
       })
   }
 
-  window.CSAgentWidget = {
+  window.AgentDeskWidget = {
     mount,
     destroy,
     open: () => openWidget(),
@@ -562,21 +562,21 @@ type FrameMessage =
     },
     getChatUrl: () => {
       if (!state.config) {
-        mount(window.CSAgentConfig || { channelId: "" })
+        mount(window.AgentDeskConfig || { channelId: "" })
       }
       if (!state.config?.channelId) {
         return Promise.reject(new Error("channelId is required"))
       }
       return prepareFrameUrl().then((frameUrl) => frameUrl.toString())
     },
-  } satisfies CSAgentWidget
+  } satisfies AgentDeskWidget
 
   if (!state.listenerBound) {
     window.addEventListener("message", handleWindowMessage)
     state.listenerBound = true
   }
 
-  if (window.CSAgentConfig) {
-    mount(window.CSAgentConfig)
+  if (window.AgentDeskConfig) {
+    mount(window.AgentDeskConfig)
   }
 })()

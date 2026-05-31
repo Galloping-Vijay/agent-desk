@@ -740,7 +740,7 @@ function WebAccessGuide({ channelId }: { channelId: string }) {
       return ""
     }
     return `<script>
-  window.CSAgentConfig = {
+  window.AgentDeskConfig = {
     channelId: "${channelId}"
   };
 </script>

@@ -36,8 +36,8 @@ export function readSupportChatRuntimeConfig(): SupportChatRuntimeConfig {
   if (window.__CS_AI_AGENT_WIDGET_CONFIG__) {
     return window.__CS_AI_AGENT_WIDGET_CONFIG__
   }
-  if (window.CSAgentConfig) {
-    const { getUserToken: _getUserToken, ...hostConfig } = window.CSAgentConfig
+  if (window.AgentDeskConfig) {
+    const { getUserToken: _getUserToken, ...hostConfig } = window.AgentDeskConfig
     return {
       ...fallback,
       ...hostConfig,

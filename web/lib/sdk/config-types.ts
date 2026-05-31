@@ -1,4 +1,4 @@
-export type CSAgentConfig = {
+export type AgentDeskConfig = {
   channelId: string
   baseUrl?: string
   apiBaseUrl?: string
@@ -16,13 +16,13 @@ export type CSAgentConfig = {
   width?: string
 }
 
-export type SupportChatRuntimeConfig = Omit<CSAgentConfig, "getUserToken"> & {
-  /** Used only by /support/chat to exchange for a chat token; not part of CSAgentConfig. */
+export type SupportChatRuntimeConfig = Omit<AgentDeskConfig, "getUserToken"> & {
+  /** Used only by /support/chat to exchange for a chat token; not part of AgentDeskConfig. */
   userToken?: string
 }
 
-export type CSAgentWidget = {
-  mount: (config?: CSAgentConfig) => void
+export type AgentDeskWidget = {
+  mount: (config?: AgentDeskConfig) => void
   destroy: () => void
   open: () => Promise<void>
   close: () => void
@@ -31,8 +31,8 @@ export type CSAgentWidget = {
 
 declare global {
   interface Window {
-    CSAgentConfig?: CSAgentConfig
-    CSAgentWidget?: CSAgentWidget
+    AgentDeskConfig?: AgentDeskConfig
+    AgentDeskWidget?: AgentDeskWidget
     __CS_AI_AGENT_WIDGET_CONFIG__?: SupportChatRuntimeConfig
     __CS_AI_AGENT_WIDGET_STATE__?: unknown
   }
