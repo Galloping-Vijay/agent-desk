@@ -78,6 +78,8 @@ docker compose up -d --build
 
 如需在官网或产品中嵌入客服入口，见 [Web Widget Integration](https://aiagent.huabei.pro/en/docs/integration/web-widget)。
 
+如需接入 OpenAI-compatible 模型供应商，见 [Model Provider Configuration](https://aiagent.huabei.pro/en/docs/config/model-provider)。
+
 Compose 默认会启动：
 
 - `cs-ai-agent`：应用服务，端口 `8083`

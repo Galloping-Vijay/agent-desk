@@ -78,6 +78,8 @@ For the full English setup guide, see [Docker Compose Quick Start](https://aiage
 
 To embed customer support on your website, see [Web Widget Integration](https://aiagent.huabei.pro/en/docs/integration/web-widget).
 
+To connect OpenAI-compatible model providers, see [Model Provider Configuration](https://aiagent.huabei.pro/en/docs/config/model-provider).
+
 Compose starts:
 
 - `cs-ai-agent`: application service on port `8083`
