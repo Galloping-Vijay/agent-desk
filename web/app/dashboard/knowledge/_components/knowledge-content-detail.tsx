@@ -107,6 +107,8 @@ export function KnowledgeContentDetailDialog({
       title={title}
       size="xl"
       allowFullscreen
+      closeOnEsc
+      defaultFullscreen
       footer={
         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
           {t("common.close")}
@@ -166,7 +168,7 @@ export function KnowledgeContentDetailDialog({
                 <div className="text-sm font-medium">{t("knowledge.content")}</div>
                 <Badge variant="outline">{documentDetail.contentType || "-"}</Badge>
               </div>
-              <div className="max-h-[52vh] overflow-auto rounded-md border bg-background p-4">
+              <div className="rounded-md border bg-background p-4">
                 <SafeRichHTML html={renderDocumentContent(documentDetail)} />
               </div>
             </div>
@@ -180,7 +182,7 @@ export function KnowledgeContentDetailDialog({
               </div>
               <div className="space-y-2">
                 <div className="text-sm font-medium">{t("knowledge.answer")}</div>
-                <pre className="max-h-[36vh] overflow-auto whitespace-pre-wrap rounded-md border bg-muted/20 p-4 text-sm leading-6">
+                <pre className="whitespace-pre-wrap rounded-md border bg-muted/20 p-4 text-sm leading-6">
                   {faqDetail.answer || "-"}
                 </pre>
               </div>
