@@ -196,7 +196,7 @@ export function KnowledgeDirectoryPanel({
   return (
     <>
       <div className="flex h-full min-h-0 w-56 shrink-0 flex-col border-r bg-muted/20">
-        <div className="flex items-center justify-between border-b bg-background px-3 py-2">
+        <div className="flex h-[49px] items-center justify-between border-b bg-background px-3">
           <div className="text-sm font-medium">{t("knowledge.directory")}</div>
           <Button
             variant="ghost"
