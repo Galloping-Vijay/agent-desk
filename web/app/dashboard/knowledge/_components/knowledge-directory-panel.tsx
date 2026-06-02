@@ -12,7 +12,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type PointerEvent } from "react";
 import { toast } from "sonner";
 
 import { OptionCombobox } from "@/components/option-combobox";
@@ -61,6 +61,11 @@ type DirectoryDialogState = {
 
 type DirectoryOption = { value: string; label: string };
 
+const DIRECTORY_PANEL_WIDTH_STORAGE_KEY = "knowledge-directory-panel-width";
+const DIRECTORY_PANEL_MIN_WIDTH = 180;
+const DIRECTORY_PANEL_MAX_WIDTH = 360;
+const DIRECTORY_PANEL_DEFAULT_WIDTH = 224;
+
 function rootDirectoryOptions(items: KnowledgeDirectory[]): DirectoryOption[] {
   return items.map((item) => ({ value: String(item.id), label: item.name }));
 }
@@ -84,6 +89,16 @@ export function KnowledgeDirectoryPanel({
   onChanged,
 }: KnowledgeDirectoryPanelProps) {
   const t = useI18n();
+  const [panelWidth, setPanelWidth] = useState(() => {
+    if (typeof window === "undefined") {
+      return DIRECTORY_PANEL_DEFAULT_WIDTH;
+    }
+    const saved = Number(localStorage.getItem(DIRECTORY_PANEL_WIDTH_STORAGE_KEY));
+    if (!Number.isFinite(saved)) {
+      return DIRECTORY_PANEL_DEFAULT_WIDTH;
+    }
+    return Math.min(DIRECTORY_PANEL_MAX_WIDTH, Math.max(DIRECTORY_PANEL_MIN_WIDTH, saved));
+  });
   const [directories, setDirectories] = useState<KnowledgeDirectory[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [contextMenuDirectoryId, setContextMenuDirectoryId] = useState<number | null>(null);
@@ -120,6 +135,35 @@ export function KnowledgeDirectoryPanel({
   useEffect(() => {
     void loadDirectories();
   }, [loadDirectories]);
+
+  useEffect(() => {
+    localStorage.setItem(DIRECTORY_PANEL_WIDTH_STORAGE_KEY, String(panelWidth));
+  }, [panelWidth]);
+
+  function handleResizePointerDown(event: PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = panelWidth;
+
+    function handlePointerMove(moveEvent: globalThis.PointerEvent) {
+      const nextWidth = startWidth + moveEvent.clientX - startX;
+      setPanelWidth(
+        Math.min(DIRECTORY_PANEL_MAX_WIDTH, Math.max(DIRECTORY_PANEL_MIN_WIDTH, nextWidth)),
+      );
+    }
+
+    function handlePointerUp() {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    }
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+  }
 
   function toggleDirectory(id: number) {
     setExpandedIds((current) => {
@@ -202,7 +246,10 @@ export function KnowledgeDirectoryPanel({
 
   return (
     <>
-      <div className="flex h-full min-h-0 w-56 shrink-0 flex-col border-r bg-muted/20">
+      <div
+        className="relative flex h-full min-h-0 shrink-0 flex-col border-r bg-muted/20"
+        style={{ width: panelWidth }}
+      >
         <div className="flex h-[49px] items-center justify-between border-b bg-background px-3">
           <div className="text-sm font-medium">{t("knowledge.directory")}</div>
           <Button
@@ -252,6 +299,13 @@ export function KnowledgeDirectoryPanel({
             ))}
           </div>
         </ScrollArea>
+        <div
+          className="absolute top-0 right-[-3px] z-10 h-full w-1.5 cursor-col-resize transition-colors hover:bg-primary/30"
+          onPointerDown={handleResizePointerDown}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t("knowledge.resizeDirectoryPanel")}
+        />
       </div>
       <ProjectDialog
         open={dialog.open}

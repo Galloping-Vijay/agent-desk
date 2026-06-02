@@ -1814,6 +1814,7 @@
     "batchDeleteFailed": "批量删除失败",
     "targetDirectory": "目标目录",
     "directory": "目录",
+    "resizeDirectoryPanel": "调整目录面板宽度",
     "allContent": "全部内容",
     "rootContent": "根目录内容",
     "rootDirectory": "一级目录",

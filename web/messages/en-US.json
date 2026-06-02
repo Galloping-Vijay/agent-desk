@@ -1814,6 +1814,7 @@
     "batchDeleteFailed": "Could not delete selected items.",
     "targetDirectory": "Target directory",
     "directory": "Directory",
+    "resizeDirectoryPanel": "Resize directory panel",
     "allContent": "All content",
     "rootContent": "Root content",
     "rootDirectory": "Root directory",
