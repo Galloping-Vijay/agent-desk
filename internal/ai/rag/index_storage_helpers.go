@@ -6,9 +6,6 @@ import (
 	"log/slog"
 
 	"agent-desk/internal/ai/rag/vectordb"
-	"agent-desk/internal/models"
-
-	"github.com/mlogclub/simple/sqls"
 )
 
 func (s *index) ensureCollection(ctx context.Context, provider vectordb.Provider, collectionName string, dimension int) error {
@@ -24,30 +21,4 @@ func (s *index) ensureCollection(ctx context.Context, provider vectordb.Provider
 	}
 	slog.Info("Created collection for knowledge base", "collection", collectionName, "dimension", dimension)
 	return nil
-}
-
-func (s *index) replaceDocumentChunks(documentID int64, chunkModels []models.KnowledgeChunk) error {
-	return sqls.WithTransaction(func(ctx *sqls.TxContext) error {
-		if err := ctx.Tx.Where("document_id = ?", documentID).Delete(&models.KnowledgeChunk{}).Error; err != nil {
-			return err
-		}
-		for _, chunk := range chunkModels {
-			if err := ctx.Tx.Create(&chunk).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
-func (s *index) replaceFAQChunk(faqID int64, chunkModel *models.KnowledgeChunk) error {
-	if chunkModel == nil {
-		return nil
-	}
-	return sqls.WithTransaction(func(ctx *sqls.TxContext) error {
-		if err := ctx.Tx.Where("faq_id = ?", faqID).Delete(&models.KnowledgeChunk{}).Error; err != nil {
-			return err
-		}
-		return ctx.Tx.Create(chunkModel).Error
-	})
 }

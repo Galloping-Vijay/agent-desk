@@ -39,7 +39,7 @@ func (s *index) runDocumentIndex(ctx context.Context, document models.KnowledgeD
 	if err := provider.UpsertVectors(ctx, collectionName, vectors); err != nil {
 		return nil, 0, fmt.Errorf("failed to upsert vectors: %w", err)
 	}
-	if err := s.replaceDocumentChunks(document.ID, chunkModels); err != nil {
+	if err := repositories.KnowledgeChunkRepository.ReplaceByDocumentID(sqls.DB(), document.ID, chunkModels); err != nil {
 		return nil, 0, fmt.Errorf("failed to save chunks: %w", err)
 	}
 	if staleVectorIDs := s.collectStaleVectorIDs(existingChunks, vectors); len(staleVectorIDs) > 0 {
@@ -77,7 +77,7 @@ func (s *index) runFAQIndex(ctx context.Context, faq models.KnowledgeFAQ, knowle
 	if err := provider.UpsertVectors(ctx, collectionName, []vectordb.Vector{vector}); err != nil {
 		return fmt.Errorf("failed to upsert vectors: %w", err)
 	}
-	if err := s.replaceFAQChunk(faq.ID, &chunkModel); err != nil {
+	if err := repositories.KnowledgeChunkRepository.ReplaceByFaqID(sqls.DB(), faq.ID, &chunkModel); err != nil {
 		return fmt.Errorf("failed to save faq chunk: %w", err)
 	}
 	if staleVectorIDs := s.collectStaleVectorIDs(existingChunks, []vectordb.Vector{vector}); len(staleVectorIDs) > 0 {

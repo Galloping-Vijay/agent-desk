@@ -77,6 +77,30 @@ func (r *knowledgeChunkRepository) BatchCreate(db *gorm.DB, list []models.Knowle
 	return
 }
 
+func (r *knowledgeChunkRepository) ReplaceByDocumentID(db *gorm.DB, documentID int64, list []models.KnowledgeChunk) error {
+	return sqls.WithTransaction(func(ctx *sqls.TxContext) error {
+		if err := ctx.Tx.Where("document_id = ?", documentID).Delete(&models.KnowledgeChunk{}).Error; err != nil {
+			return err
+		}
+		if len(list) == 0 {
+			return nil
+		}
+		return ctx.Tx.Create(&list).Error
+	})
+}
+
+func (r *knowledgeChunkRepository) ReplaceByFaqID(db *gorm.DB, faqID int64, item *models.KnowledgeChunk) error {
+	return sqls.WithTransaction(func(ctx *sqls.TxContext) error {
+		if err := ctx.Tx.Where("faq_id = ?", faqID).Delete(&models.KnowledgeChunk{}).Error; err != nil {
+			return err
+		}
+		if item == nil {
+			return nil
+		}
+		return ctx.Tx.Create(item).Error
+	})
+}
+
 func (r *knowledgeChunkRepository) Update(db *gorm.DB, t *models.KnowledgeChunk) (err error) {
 	err = db.Save(t).Error
 	return
