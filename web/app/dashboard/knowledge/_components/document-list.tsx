@@ -338,8 +338,8 @@ export function DocumentList({ knowledgeBaseId, onActionStateChange }: DocumentL
         />
         <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex flex-col gap-2 border-b bg-background px-6 py-2">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
+          <div className="flex min-w-0 gap-2">
+            <div className="relative min-w-0 flex-1">
               <SearchIcon className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={String(draftFilters.title ?? "")}
@@ -349,22 +349,26 @@ export function DocumentList({ knowledgeBaseId, onActionStateChange }: DocumentL
                 className="h-8 pl-8 text-xs"
               />
             </div>
-            <OptionCombobox
-              value={String(draftFilters.status ?? "all")}
-              onChange={handleStatusFilterChange}
-              options={statusOptions}
-              placeholder={t("knowledge.allStatus")}
-              searchPlaceholder={t("knowledge.searchStatus")}
-              emptyText={t("knowledge.emptyStatus")}
-            />
-            <OptionCombobox
-              value={String(draftFilters.indexStatus ?? "all")}
-              onChange={handleIndexStatusFilterChange}
-              options={indexStatusOptions}
-              placeholder={t("knowledge.allIndexStatus")}
-              searchPlaceholder={t("knowledge.searchStatus")}
-              emptyText={t("knowledge.emptyStatus")}
-            />
+            <div className="w-28 shrink-0">
+              <OptionCombobox
+                value={String(draftFilters.status ?? "all")}
+                onChange={handleStatusFilterChange}
+                options={statusOptions}
+                placeholder={t("knowledge.allStatus")}
+                searchPlaceholder={t("knowledge.searchStatus")}
+                emptyText={t("knowledge.emptyStatus")}
+              />
+            </div>
+            <div className="w-32 shrink-0">
+              <OptionCombobox
+                value={String(draftFilters.indexStatus ?? "all")}
+                onChange={handleIndexStatusFilterChange}
+                options={indexStatusOptions}
+                placeholder={t("knowledge.allIndexStatus")}
+                searchPlaceholder={t("knowledge.searchStatus")}
+                emptyText={t("knowledge.emptyStatus")}
+              />
+            </div>
           </div>
         </div>
         <div className="min-h-0 flex-1">
