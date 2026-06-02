@@ -57,7 +57,7 @@ export default function DashboardKnowledgeDocumentsPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-full min-h-0 overflow-hidden">
       <div
         className={`shrink-0 overflow-hidden transition-[width] duration-200 ${
           sidebarCollapsed ? "w-0" : "w-80"
@@ -83,7 +83,7 @@ export default function DashboardKnowledgeDocumentsPage() {
           )}
         </Button>
       </div>
-      <div className="min-w-0 min-h-0 flex-1">
+      <div className="min-w-0 min-h-0 h-full flex-1 overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full min-h-0 gap-0">
           <div className="border-b px-6 py-4">
             <div className="flex items-center gap-2">
