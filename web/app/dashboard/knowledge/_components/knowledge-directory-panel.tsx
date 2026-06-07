@@ -6,6 +6,7 @@ import {
   MouseSensor,
   TouchSensor,
   closestCenter,
+  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -61,7 +62,11 @@ import {
 } from "@/lib/api/admin";
 import { useI18n } from "@/i18n/provider";
 import { cn } from "@/lib/utils";
-import { findDirectoryParentId, moveDirectoryWithinParent } from "./knowledge-directory-sort";
+import {
+  findDirectoryParentId,
+  moveDirectoryToParent,
+  moveDirectoryWithinParent,
+} from "./knowledge-directory-sort";
 
 type KnowledgeDirectoryPanelProps = {
   knowledgeBaseId: number;
@@ -84,6 +89,7 @@ const DIRECTORY_PANEL_WIDTH_STORAGE_KEY = "knowledge-directory-panel-width";
 const DIRECTORY_PANEL_MIN_WIDTH = 180;
 const DIRECTORY_PANEL_MAX_WIDTH = 360;
 const DIRECTORY_PANEL_DEFAULT_WIDTH = 224;
+const ROOT_DIRECTORY_DROP_ID = "knowledge-directory-root";
 
 function rootDirectoryOptions(items: KnowledgeDirectory[]): DirectoryOption[] {
   return items.map((item) => ({ value: String(item.id), label: item.name }));
@@ -305,14 +311,29 @@ export function KnowledgeDirectoryPanel({
       return;
     }
     const activeId = Number(active.id);
+    if (!Number.isFinite(activeId)) {
+      return;
+    }
+    if (over.id === ROOT_DIRECTORY_DROP_ID) {
+      await handleDirectoryMoveToParent(activeId, 0);
+      return;
+    }
     const overId = Number(over.id);
-    if (!Number.isFinite(activeId) || !Number.isFinite(overId)) {
+    if (!Number.isFinite(overId)) {
       return;
     }
 
     const activeParentId = findDirectoryParentId(directories, activeId);
     const overParentId = findDirectoryParentId(directories, overId);
-    if (activeParentId === null || overParentId === null || activeParentId !== overParentId) {
+    if (activeParentId === null || overParentId === null) {
+      return;
+    }
+    if (activeParentId !== overParentId) {
+      await handleDirectoryMoveToParent(activeId, overId);
+      return;
+    }
+    if (activeParentId === 0 && overParentId === 0 && event.delta.x > 24) {
+      await handleDirectoryMoveToParent(activeId, overId);
       return;
     }
 
@@ -336,6 +357,42 @@ export function KnowledgeDirectoryPanel({
     } catch (error) {
       setDirectories(previousDirectories);
       toast.error(error instanceof Error ? error.message : t("knowledge.directorySortUpdateFailed"));
+    } finally {
+      setSorting(false);
+    }
+  }
+
+  async function handleDirectoryMoveToParent(activeId: number, targetParentId: number) {
+    const previousDirectories = directories;
+    const moved = moveDirectoryToParent(previousDirectories, activeId, targetParentId);
+    if (!moved.changed || !moved.item) {
+      return;
+    }
+
+    setDirectories(moved.items);
+    if (moved.parentId > 0) {
+      setExpandedIds((current) => new Set(current).add(moved.parentId));
+    }
+    setSorting(true);
+    try {
+      await updateKnowledgeDirectory({
+        id: moved.item.id,
+        knowledgeBaseId,
+        parentId: moved.parentId,
+        name: moved.item.name,
+        remark: moved.item.remark || "",
+      });
+      await updateKnowledgeDirectorySort({
+        knowledgeBaseId,
+        parentId: moved.parentId,
+        ids: moved.orderedIds,
+      });
+      toast.success(t("knowledge.directoryMoved"));
+      await loadDirectories();
+      onChanged?.();
+    } catch (error) {
+      setDirectories(previousDirectories);
+      toast.error(error instanceof Error ? error.message : t("knowledge.directoryMoveFailed"));
     } finally {
       setSorting(false);
     }
@@ -368,17 +425,16 @@ export function KnowledgeDirectoryPanel({
               selected={selectedDirectoryId === null}
               onClick={() => onSelectDirectory(null)}
             />
-            <DirectoryStaticRow
-              icon={<FolderIcon className="size-4 text-muted-foreground" />}
-              label={t("knowledge.rootContent")}
-              selected={selectedDirectoryId === 0}
-              onClick={() => onSelectDirectory(0)}
-            />
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={(event) => void handleDirectoryDragEnd(event)}
             >
+              <RootDirectoryRow
+                selected={selectedDirectoryId === 0}
+                onClick={() => onSelectDirectory(0)}
+                t={t}
+              />
               <SortableContext
                 items={directories.map((item) => item.id)}
                 strategy={verticalListSortingStrategy}
@@ -490,16 +546,18 @@ type DirectoryStaticRowProps = {
   icon: ReactNode;
   label: string;
   selected: boolean;
+  draggingOver?: boolean;
   onClick: () => void;
 };
 
-function DirectoryStaticRow({ icon, label, selected, onClick }: DirectoryStaticRowProps) {
+function DirectoryStaticRow({ icon, label, selected, draggingOver, onClick }: DirectoryStaticRowProps) {
   return (
     <button
       type="button"
       className={cn(
         "flex w-full items-center gap-1 px-2 py-1.5 text-left text-sm hover:bg-accent",
         selected && "bg-accent text-accent-foreground",
+        draggingOver && "bg-primary/10 text-accent-foreground",
       )}
       onClick={onClick}
     >
@@ -507,6 +565,30 @@ function DirectoryStaticRow({ icon, label, selected, onClick }: DirectoryStaticR
       {icon}
       <span className="min-w-0 flex-1 truncate">{label}</span>
     </button>
+  );
+}
+
+type RootDirectoryRowProps = {
+  selected: boolean;
+  onClick: () => void;
+  t: TFunction;
+};
+
+function RootDirectoryRow({ selected, onClick, t }: RootDirectoryRowProps) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: ROOT_DIRECTORY_DROP_ID,
+  });
+
+  return (
+    <div ref={setNodeRef}>
+      <DirectoryStaticRow
+        icon={<FolderIcon className="size-4 text-muted-foreground" />}
+        label={t("knowledge.rootContent")}
+        selected={selected}
+        draggingOver={isOver}
+        onClick={onClick}
+      />
+    </div>
   );
 }
 

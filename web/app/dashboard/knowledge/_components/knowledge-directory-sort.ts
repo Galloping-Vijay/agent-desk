@@ -11,6 +11,11 @@ export type MoveDirectoryResult<T extends SortableKnowledgeDirectory> = {
   orderedIds: number[]
 }
 
+export type MoveDirectoryToParentResult<T extends SortableKnowledgeDirectory> =
+  MoveDirectoryResult<T> & {
+    item: T | null
+  }
+
 function arrayMove<T>(items: T[], fromIndex: number, toIndex: number) {
   const next = [...items]
   const [item] = next.splice(fromIndex, 1)
@@ -32,6 +37,64 @@ export function findDirectoryParentId<T extends SortableKnowledgeDirectory>(
     }
   }
   return null
+}
+
+export function findDirectory<T extends SortableKnowledgeDirectory>(
+  items: T[],
+  id: number,
+): T | null {
+  for (const item of items) {
+    if (item.id === id) {
+      return item
+    }
+    const child = findDirectory(item.children as T[] | undefined ?? [], id)
+    if (child !== null) {
+      return child
+    }
+  }
+  return null
+}
+
+export function moveDirectoryToParent<T extends SortableKnowledgeDirectory>(
+  items: T[],
+  activeId: number,
+  targetParentId: number,
+): MoveDirectoryToParentResult<T> {
+  if (activeId === targetParentId) {
+    return unchangedParentMove(items, targetParentId)
+  }
+
+  const activeItem = findDirectory(items, activeId)
+  const activeParentId = findDirectoryParentId(items, activeId)
+  if (!activeItem || activeParentId === null || activeParentId === targetParentId) {
+    return unchangedParentMove(items, targetParentId)
+  }
+
+  if (targetParentId > 0) {
+    const targetParent = findDirectory(items, targetParentId)
+    if (!targetParent || targetParent.parentId !== 0 || (activeItem.children?.length ?? 0) > 0) {
+      return unchangedParentMove(items, targetParentId)
+    }
+  }
+
+  const removed = removeDirectory(items, activeId)
+  if (!removed.item) {
+    return unchangedParentMove(items, targetParentId)
+  }
+
+  const movedItem = { ...removed.item, parentId: targetParentId } as T
+  const appended = appendDirectoryToParent(removed.items, targetParentId, movedItem)
+  if (!appended.changed) {
+    return unchangedParentMove(items, targetParentId)
+  }
+
+  return {
+    items: appended.items,
+    changed: true,
+    parentId: targetParentId,
+    orderedIds: appended.siblings.map((item) => item.id),
+    item: movedItem,
+  }
 }
 
 export function moveDirectoryWithinParent<T extends SortableKnowledgeDirectory>(
@@ -73,6 +136,78 @@ export function moveDirectoryWithinParent<T extends SortableKnowledgeDirectory>(
     changed,
     parentId,
     orderedIds,
+  }
+}
+
+function unchangedParentMove<T extends SortableKnowledgeDirectory>(
+  items: T[],
+  parentId: number,
+): MoveDirectoryToParentResult<T> {
+  return { items, changed: false, parentId, orderedIds: [], item: null }
+}
+
+function removeDirectory<T extends SortableKnowledgeDirectory>(
+  items: T[],
+  id: number,
+): { items: T[]; item: T | null } {
+  let removedItem: T | null = null
+  const nextItems: T[] = []
+
+  for (const item of items) {
+    if (item.id === id) {
+      removedItem = item
+      continue
+    }
+    if (item.children?.length) {
+      const removed = removeDirectory(item.children as T[], id)
+      if (removed.item) {
+        removedItem = removed.item
+        nextItems.push({ ...item, children: removed.items } as T)
+        continue
+      }
+    }
+    nextItems.push(item)
+  }
+
+  return {
+    items: removedItem ? nextItems : items,
+    item: removedItem,
+  }
+}
+
+function appendDirectoryToParent<T extends SortableKnowledgeDirectory>(
+  items: T[],
+  parentId: number,
+  item: T,
+): { items: T[]; changed: boolean; siblings: T[] } {
+  if (parentId === 0) {
+    const siblings = [...items, item]
+    return { items: siblings, changed: true, siblings }
+  }
+
+  let changed = false
+  let siblings: T[] = []
+  const nextItems = items.map((current) => {
+    if (current.id === parentId) {
+      siblings = [...((current.children as T[] | undefined) ?? []), item]
+      changed = true
+      return { ...current, children: siblings } as T
+    }
+    if (current.children?.length) {
+      const appended = appendDirectoryToParent(current.children as T[], parentId, item)
+      if (appended.changed) {
+        changed = true
+        siblings = appended.siblings
+        return { ...current, children: appended.items } as T
+      }
+    }
+    return current
+  })
+
+  return {
+    items: changed ? nextItems : items,
+    changed,
+    siblings,
   }
 }
 
