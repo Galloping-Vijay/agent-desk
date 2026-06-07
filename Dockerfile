@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 	CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
 	go build -v -trimpath -ldflags="-s -w" -o /out/agent-desk ./cmd/server
 
-FROM golang:1.26-bookworm AS server-builder-lancedb
+FROM golang:1.26-trixie AS server-builder-lancedb
 WORKDIR /src
 
 ARG TARGETOS=linux
@@ -65,6 +65,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 	tar -xzf /tmp/lancedb-go-native-binaries.tar.gz -C /src; \
 	test -f "/src/include/lancedb.h"; \
 	test -f "/src/lib/linux_$arch/liblancedb_go.so"; \
+	ldd --version | head -n 1; \
 	file "/src/lib/linux_$arch/liblancedb_go.so"; \
 	CGO_ENABLED=1 GOOS="${TARGETOS}" GOARCH="$arch" \
 	CGO_CFLAGS="-I/src/include" \
@@ -73,7 +74,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 	ldd /out/agent-desk; \
 	cp "/src/lib/linux_$arch/liblancedb_go.so" /out/liblancedb_go.so
 
-FROM debian:bookworm-slim AS app-lancedb
+FROM debian:trixie-slim AS app-lancedb
 WORKDIR /app
 
 ENV TZ=Asia/Shanghai
