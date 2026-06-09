@@ -44,6 +44,7 @@ func (s ServerConfig) Address() string {
 type CORSConfig struct {
 	// AllowedOrigins 是允许浏览器跨域访问的 Origin 白名单，必须包含协议和域名。
 	// 留空表示不允许跨域请求；同源请求通常不会携带 Origin，不受影响。
+	// 使用 "*" 表示允许所有跨域来源。
 	AllowedOrigins []string `yaml:"allowedOrigins"`
 }
 

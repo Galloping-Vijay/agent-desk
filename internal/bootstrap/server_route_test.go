@@ -214,6 +214,43 @@ func TestNewServerRejectsUnconfiguredCORSOrigin(t *testing.T) {
 	}
 }
 
+func TestNewServerAllowsWildcardCORSOrigin(t *testing.T) {
+	config.SetCurrent(&config.Config{
+		Server: config.ServerConfig{
+			CORS: config.CORSConfig{
+				AllowedOrigins: []string{"*"},
+			},
+		},
+		Storage: config.StorageConfig{
+			Local: config.LocalStorageConfig{
+				Root:    "storage",
+				BaseURL: "/storage",
+			},
+		},
+	})
+
+	app, err := NewServer()
+	if err != nil {
+		t.Fatalf("NewServer() error = %v", err)
+	}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodOptions, "/api/auth/login", nil)
+	req.Header.Set("Origin", "http://localhost:3000")
+	req.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	app.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("status=%d want %d", rec.Code, http.StatusNoContent)
+	}
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Fatalf("Access-Control-Allow-Origin=%q want %q", got, "*")
+	}
+	if got := rec.Header().Get("Access-Control-Allow-Headers"); !strings.Contains(got, "X-Locale") {
+		t.Fatalf("Access-Control-Allow-Headers=%q should contain %q", got, "X-Locale")
+	}
+}
+
 func TestNewServerEchoesRequestID(t *testing.T) {
 	config.SetCurrent(&config.Config{
 		Storage: config.StorageConfig{

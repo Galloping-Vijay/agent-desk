@@ -3,6 +3,7 @@ server:
   cors:
     # Browser CORS allowlist. In production, replace this with the actual frontend or embedded-site domains, such as https://support.example.com.
     # Leave it empty to reject cross-origin browser requests. Same-origin and non-browser calls are still supported.
+    # Use "*" to allow all browser origins, for example in local development.
     allowedOrigins:
       - http://127.0.0.1:8083
       - http://localhost:8083

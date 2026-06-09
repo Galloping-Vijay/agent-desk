@@ -64,13 +64,18 @@ func NewServer() (*gin.Engine, error) {
 
 func corsMiddleware() gin.HandlerFunc {
 	allowedOrigins := config.Current().Server.CORS.AllowedOrigins
-	allowHeaders := "Origin, Content-Type, Accept, Authorization, X-Requested-With, X-Guest-Id, X-Channel-Id, X-External-Id, X-External-Name, X-Customer-Session-Token, X-Customer-Session-Expires-At"
+	allowHeaders := "Origin, Content-Type, Accept, Authorization, Accept-Language, X-Locale, X-Requested-With, X-Guest-Id, X-Channel-Id, X-External-Id, X-External-Name, X-Customer-Session-Token, X-Customer-Session-Expires-At"
 	exposeHeaders := "Content-Length, Content-Type, Authorization, X-Guest-Id, X-Channel-Id, X-External-Id, X-External-Name, X-Customer-Session-Token, X-Customer-Session-Expires-At"
 	allowMethods := "GET, POST, PUT, PATCH, DELETE, OPTIONS"
 	allowedOriginSet := make(map[string]struct{}, len(allowedOrigins))
+	allowAllOrigins := false
 	for _, origin := range allowedOrigins {
 		origin = strings.TrimRight(strings.TrimSpace(origin), "/")
 		if origin == "" {
+			continue
+		}
+		if origin == "*" {
+			allowAllOrigins = true
 			continue
 		}
 		allowedOriginSet[origin] = struct{}{}
@@ -82,16 +87,20 @@ func corsMiddleware() gin.HandlerFunc {
 		}
 		origin := strings.TrimRight(strings.TrimSpace(ctx.GetHeader("Origin")), "/")
 		if origin != "" {
-			ctx.Header("Vary", "Origin")
-			if _, ok := allowedOriginSet[origin]; !ok {
-				if ctx.Request.Method == http.MethodOptions {
-					ctx.AbortWithStatus(http.StatusForbidden)
+			if allowAllOrigins {
+				ctx.Header("Access-Control-Allow-Origin", "*")
+			} else {
+				ctx.Header("Vary", "Origin")
+				if _, ok := allowedOriginSet[origin]; !ok {
+					if ctx.Request.Method == http.MethodOptions {
+						ctx.AbortWithStatus(http.StatusForbidden)
+						return
+					}
+					ctx.Next()
 					return
 				}
-				ctx.Next()
-				return
+				ctx.Header("Access-Control-Allow-Origin", origin)
 			}
-			ctx.Header("Access-Control-Allow-Origin", origin)
 			ctx.Header("Access-Control-Allow-Methods", allowMethods)
 			ctx.Header("Access-Control-Allow-Headers", allowHeaders)
 			ctx.Header("Access-Control-Expose-Headers", exposeHeaders)
